@@ -40,6 +40,14 @@ ovs.add_middleware(
     allow_headers=["*"],
 )
 
+@ovs.on_event("startup")
+async def startup_event():
+    user_data = CreateUserData(admin_id="admin", email="benh@lnbits.com", roll=2)
+    try:
+        user = await create_user(user_data)
+        print("User created successfully: ", user)
+    except Exception as e:
+        print(f"Error creating user: {e}")
 
 @ovs.post("/user")
 async def ovs_api_create_user(data: CreateUserData):

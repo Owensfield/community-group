@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "communitygroup"
+version = "0.01"
+description = "backend for the owensfield polling system"
+authors = ["arcbtc <ben@arc.wales>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.112.2"
+uvicorn = {extras = ["standard"], version = "^0.30.6"}
+sqlalchemy = "<1.4"
+asyncpg = "^0.29.0"
+aiosqlite = "^0.20.0"
+shortuuid = "^1.0.13"
+loguru = "^0.7.2"
+sqlalchemy-aio = "^0.17.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

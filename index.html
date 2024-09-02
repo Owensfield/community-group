@@ -100,8 +100,61 @@
         /* Adjust as needed */
       }
     }
-  </style>
 
+    .tab {
+      overflow: hidden;
+      border: 1px solid #ccc;
+      background-color: #f1f1f1;
+    }
+
+    /* Style the buttons inside the tab */
+    .tab button {
+      background-color: inherit;
+      float: left;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      transition: 0.3s;
+      font-size: 17px;
+    }
+
+    /* Change background color of buttons on hover */
+    .tab button:hover {
+      background-color: #ddd;
+    }
+
+    /* Create an active/current tablink class */
+    .tab button.active {
+      background-color: #ccc;
+    }
+
+    /* Style the tab content */
+    .tabcontent {
+      display: none;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-top: none;
+    }
+
+    .polls-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      /* Two columns */
+      gap: 20px;
+      /* Space between the grid items */
+    }
+
+    .poll {
+      border: 1px solid #ccc;
+      /* Optional: Add some styling to the poll items */
+      padding: 10px;
+      /* Optional: Add some padding */
+      background-color: #f9f9f9;
+      /* Optional: Add a background color */
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 </head>
 
 <body>
@@ -214,12 +267,109 @@
         </div>
         <p class="w3-center">Community polls for guiding decisions making.</p>
 
-        <center> <button class="btnstyle" id="openDialog">Scan login qr</button></center>
+        <div id="app">
+          <div v-if="showTabs">
+            <div class="tab">
+              <button class="tablinks" @click="openCity($event, 'Active')">Active polls</button>
+              <button class="tablinks" @click="openCity($event, 'Old')">Old polls</button>
+              <button class="tablinks" @click="openCity($event, 'Suggest')">Suggest a poll</button>
+              <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'Review')">Polls in
+                review*</button>
+                <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userCreate')">Create a user*</button>
+                <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userDelete')">Delete a user*</button>
+            </div>
+
+            <div id="Active" class="tabcontent">
+              <h3>Active Polls</h3>
+              <div class="polls-container">
+                <div v-for="(poll, pollIndex) in activePolls" :key="pollIndex" class="poll">
+                  <p>{{ poll.title }}</p>
+                  <div v-for="(choice, index) in poll.choices" :key="index">
+                    <label :for="'choice' + pollIndex + '_' + index">{{ choice }}</label>
+                    <input type="radio" :id="'choice' + pollIndex + '_' + index" :value="index" v-model="poll.picked" @change="submitVote(poll.id, index)"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="Old" class="tabcontent">
+              <h3>Old Polls</h3>
+              <div class="polls-container">
+                <div v-for="(poll, pollIndex) in oldPolls" :key="pollIndex" class="poll">
+                  <p>{{ poll.title }}</p>
+                    <label>{{ poll.choice }}</label>
+                </div>
+              </div>
+            </div>
+
+            <div id="Suggest" class="tabcontent">
+              <h3>Suggest a poll</h3>
+              <form>
+                <label for="pollTitle">Poll title:</label>
+                <br></br>
+                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <br></br>
+                <label for="choices">Choices: (separated by new lines)</label>
+                <br></br>
+                <textarea id="choices" name="choices" rows="10" cols="50"></textarea>
+                <br></br>
+                <button type="submit">Submit</button>
+            </div>
+
+            <div id="Review" class="tabcontent">
+              <h3>Polls in review</h3>
+              <div class="polls-container">
+                <div v-for="(poll, pollIndex) in activePolls" :key="pollIndex" class="poll">
+                  <p>{{ poll.title }}</p>
+                  <div v-for="(choice, index) in poll.choices" :key="index">
+                    <label :for="'choice' + pollIndex + '_' + index">{{ choice }}</label>
+                  </div>
+                  <label>Approve</label>
+                  <input type="radio" id="poll.id" v-model="approvedPoll" @change=""/>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="user_details.roll == 2" id="userCreate" class="tabcontent">
+              <h3>Create a user</h3>
+              <form>
+                <label for="pollTitle">Email:</label>
+                <br></br>
+                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <br></br>
+                <label for="choices">Roll:</label>
+                <br></br>
+                <input id="choices" name="choices" rows="10" cols="50"></input>
+                <br></br>
+                <button type="submit">Submit</button>
+            </div>
+
+            <div v-if="user_details.roll == 2" id="userDelete" class="tabcontent">
+              <h3>Delete a user</h3>
+              <form>
+                <label for="pollTitle">Email:</label>
+                <br></br>
+                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <br></br>
+                <label for="pollTitle">User ID:</label>
+                <br></br>
+                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <br></br>
+                <button type="submit">Submit</button>
+            </div>
+
+          </div>
+          <div v-if="!showTabs">
+            <center> <button class="btnstyle" id="openDialog">Scan login qr</button></center>
+          </div>
+        </div>
+
+
 
         <dialog id="myDialog">
-          <h1>QR Code Scanner</h1>
-          <video id="qr-video" style="width: 100%; height: auto;"></video>
-          <p>Scanned QR Code Data: <span id="qr-result">None</span></p>
+          <div style="border: 2px solid black">
+            <qrcode-stream :track="paintBoundingBox" @detect="onDetect" @error="onError"></qrcode-stream>
+          </div>
           <button id="closeDialog">Close</button>
         </dialog>
 
@@ -371,78 +521,188 @@
       <i class="fa fa-instagram w3-hover-opacity"></i>
       <i class="fa fa-snapchat w3-hover-opacity"></i>
       <i class="fa fa-pinterest-p w3-hover-opacity"></i>
-      <i class="w3-hover-opacity" onClick="window.open('https://ditto.pub/@owensfield@nostr.com', '_blank')"><img src="./images/nostr.png"></i>
+      <i class="w3-hover-opacity" onClick="window.open('https://ditto.pub/@owensfield@nostr.com', '_blank')"><img
+          src="./images/nostr.png"></i>
       <i class="fa fa-linkedin w3-hover-opacity"></i>
     </div>
   </footer>
-
-  <script type="module">
-    import QrScanner from './js/qrcode.js';
-  </script>
+  <script src="./js/vue-qrcode-reader.umd.js"></script>
   <script>
-    var slideIndex = 1;
-    showDivs(slideIndex);
+    new Vue({
+      el: '#app',
+      data: {
+        showTabs: false,
+        activeTab: '',
+        user_details: [],
+        activePolls: [{
+          id: "93fg34",
+          title: 'What we do with the old shed?',
+          choices: ['Repair it', 'Replace it', 'Remove it']
+        }, {
+          id: "93fg34",
+          title: 'What we do with the old shed?',
+          choices: ['Repair it', 'Replace it', 'Remove it']
+        },{
+          id: "93fg34",
+          title: 'What we do with the old shed?',
+          choices: ['Repair it', 'Replace it', 'Remove it']
+        },{
+          id: "93fg34",
+          title: 'What should we do with the old shed?',
+          choices: ['Repair it', 'Replace it', 'Remove it']
+        }],
+        oldPolls: [{
+          id: "93fg34",
+          title: 'What we do with the old shed?',
+          choice: 'Repair it'
+        }, {
+          id: "93fg34",
+          title: 'What we do with the old shed?',
+          choice: 'Repair it'
+        },{
+          id: "93fg34",
+          title: 'What we do with the old shed?',
+          choice: 'Repair it'
+        },{
+          id: "93fg34",
+          title: 'What should we do with the old shed?',
+          choice: 'Repair it'
+        }],
+        suggestPolls: [],
+        picked: 0,
+        approvedPoll: ""
+      },
+      methods: {
+        openCity(evt, cityName) {
+          var i, tabcontent, tablinks;
+          tabcontent = document.getElementsByClassName("tabcontent");
+          for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+          }
+          tablinks = document.getElementsByClassName("tablinks");
+          for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+          }
+          var cityElement = document.getElementById(cityName);
+          if (cityElement) {
+            cityElement.style.display = "block";
+            evt.currentTarget.className += " active";
+          } else {
+            console.error(`Element with ID ${cityName} not found.`);
+          }
+        },
+        async submitVote(pollId, pickedChoice) {
+        const voteData = {
+          user_id: this.user_details.id,
+          poll_id: pollId,
+          vote_opt: pickedChoice
+        };
 
-    // Auto-scroll every 3 seconds
-    setInterval(function () {
-      plusDivs(1);
-    }, 3000);
+        try {
+          const response = await fetch('http://localhost:8000/vote', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: voteData
+          });
 
-    function plusDivs(n) {
-      showDivs(slideIndex += n);
-    }
+          if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+          }
 
-    function currentDiv(n) {
-      showDivs(slideIndex = n);
-    }
-
-    function showDivs(n) {
-      var i;
-      var x = document.getElementsByClassName("mySlides");
-      var dots = document.getElementsByClassName("demodots");
-      if (n > x.length) { slideIndex = 1 }
-      if (n < 1) { slideIndex = x.length }
-      for (i = 0; i < x.length; i++) {
-        x[i].style.display = "none";
-      }
-      for (i = 0; i < dots.length; i++) {
-        dots[i].className = dots[i].className.replace(" w3-white", "");
-      }
-      x[slideIndex - 1].style.display = "block";
-    }
-    function qrcodescanner() {
-      const qrScanner = new QrScanner(video, result => {
-        console.log('Scanned QR Code:', result);
-        scannedData = result;
-        resultElement.textContent = scannedData;
-        qrScanner.stop();
-      });
-      qrScanner.start();
-    }
-    // Function to start the QR scanner
-    function startScanning() {
-      qrScanner.start().catch(error => {
-        console.error('Camera error:', error);
-        if (error.message.includes("Camera not found")) {
-          alert("Camera not found. Please ensure your camera is connected and enabled.");
-          openDialog.disabled = true; // Disable the button if camera is not found
+          const data = await response.json();
+          console.log('Vote submitted successfully:', data);
+        } catch (error) {
+          console.error('There has been a problem with your fetch operation:', error);
         }
-      });
-    }
-    const video = document.getElementById('qr-video');
-    const resultElement = document.getElementById('qr-result');
-    let scannedData = '';
-    const openButton = document.getElementById('openDialog');
-    const closeButton = document.getElementById('closeDialog');
-    const dialog = document.getElementById('myDialog');
-    openButton.addEventListener('click', () => {
-      qrcodescanner();
-      dialog.showModal();
+      },
+        async getUser(userId) {
+          self = this;
+          console.log(this.backend_url);
+          try {
+            const response = await fetch(`http://localhost:8000/user?user_id=${userId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const data = await response.json();
+            console.log(data); // Log the result to the console
+            this.openCity(null, 'Active')
+            self.showTabs = true;
+            self.user_details = data;
+            // Check if the response is positive
+            if (data.positive) {
+
+            }
+          } catch (error) {
+            console.error('There has been a problem with your fetch operation:', error);
+          }
+        },
+        getIdFromUrl() {
+          const urlParams = new URLSearchParams(window.location.search);
+          userId = urlParams.get('id');
+          if (userId) {
+            this.getUser(userId);
+          }
+        }
+
+      },
+      mounted() {
+        const backend_url = 'http://127.0.0.1:8000';
+        var slideIndex = 1;
+        showDivs(slideIndex);
+
+        // Auto-scroll every 3 seconds
+        setInterval(function () {
+          plusDivs(1);
+        }, 3000);
+
+        function plusDivs(n) {
+          showDivs(slideIndex += n);
+        }
+
+        function currentDiv(n) {
+          showDivs(slideIndex = n);
+        }
+
+        function showDivs(n) {
+          var i;
+          var x = document.getElementsByClassName("mySlides");
+          var dots = document.getElementsByClassName("demodots");
+          if (n > x.length) { slideIndex = 1 }
+          if (n < 1) { slideIndex = x.length }
+          for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+          }
+          for (i = 0; i < dots.length; i++) {
+            dots[i].className = dots[i].className.replace(" w3-white", "");
+          }
+          x[slideIndex - 1].style.display = "block";
+        }
+        const video = document.getElementById('qr-video');
+        const resultElement = document.getElementById('qr-result');
+        let scannedData = '';
+        const openButton = document.getElementById('openDialog');
+        const closeButton = document.getElementById('closeDialog');
+        const dialog = document.getElementById('myDialog');
+        openButton.addEventListener('click', () => {
+          dialog.showModal();
+        });
+        closeButton.addEventListener('click', () => {
+          dialog.close();
+        });
+        const userId = this.getIdFromUrl();
+        this.getIdFromUrl()
+      }
     });
-    closeButton.addEventListener('click', () => {
-      dialog.close();
-    });
-    openDialog.addEventListener('click', startScanning);
+
   </script>
 
 </body>

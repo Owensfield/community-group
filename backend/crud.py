@@ -1,12 +1,12 @@
+import json
 from models import (
     CreateUserData,
+    PollData,
     CreatePollData,
-    CreateVoteData,
-    CreateVoteApprovalData,
-    GetPollData,
+    UserData,
 )
-from typing import Optional, Dict
-from typing import List, Optional, Union
+from typing import Optional
+from typing import List, Optional
 import shortuuid
 import time
 from db import Database
@@ -43,24 +43,23 @@ async def create_user(data: CreateUserData) -> CreateUserData:
     return await get_user(user_id)
 
 
-async def get_user(user_id: str) -> CreateUserData:
+async def get_user(user_id: str):
     print(f"Fetching user with id: {user_id}")
     row = await db.fetchone("SELECT * FROM Users WHERE id = ?", (user_id,))
     if row:
-        print(f"User found: {row}")
-        return CreateUserData(**row)
+        return UserData(**row)
     else:
         raise HTTPException(status_code=404, detail="User not found")
 
 
-async def get_user_by_email(email: str) -> CreateUserData:
+async def get_user_by_email(email: str) -> UserData:
     row = await db.fetchone("SELECT * FROM Users WHERE email = ?", (email,))
-    return CreateUserData(**row) if row else None
+    return UserData(**row) if row else None
 
 
-async def get_users() -> List[CreateUserData]:
+async def get_users() -> List[UserData]:
     rows = await db.fetchall("SELECT * FROM Users")
-    return [CreateUserData(**row) for row in rows]
+    return [UserData(**row) for row in rows]
 
 
 async def delete_user(user_id: str) -> None:
@@ -70,194 +69,103 @@ async def delete_user(user_id: str) -> None:
             status_code=HTTPStatus.UNAUTHORIZED,
             detail=f"User doesnt exist",
         )
-    await db.execute("DELETE FROM Users WHERE user_id = ?", (user_id,))
+    await db.execute("DELETE FROM Users WHERE id = ?", (user_id,))
 
 
 ### Polls
 
 
 async def create_poll(
-    data: CreatePollData, inkey: Optional[str] = ""
-) -> CreatePollData:
-    poll_id = shortuuid.uuid(data.title)
+    data: CreatePollData
+) -> PollData:
+    poll_id = shortuuid.uuid()
     pollCheck = await get_poll(poll_id)
     if pollCheck:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail=f"Poll with title {data.title} already exists",
         )
-    polls = await get_polls_by_signature(data.signature)
-    monthCount = 0
-    for poll in polls:
-        if (int(time.time()) - poll.timestamp) < 2629743:
-            monthCount = monthCount + 1
-    if monthCount > 2:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"Users are only allowed to suggest 3 polls per month",
-        )
+    choices = data.choices.split('\n')
+    choices = [[choice.strip(), 0] for choice in choices]
+    choices_json = json.dumps(choices)
     await db.execute(
         """
         INSERT INTO Polls (
             id,
-            signature,
             title,
-            opt1 , 
-            opt2, 
-            opt3, 
-            opt4, 
-            opt5, 
-            active,
-            closing_date
+            confirms,
+            confirmers,
+            voters,
+            choices,
+            complete
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             poll_id,
-            data.signature,
             data.title,
-            data.opt1,
-            data.opt2,
-            data.opt3,
-            data.opt4,
-            data.opt5,
             0,
-            data.closing_date,
+            ",",
+            ",",
+            str(choices_json),
+            False,
         ),
     )
     return await get_poll(poll_id)
 
-
-async def get_poll(poll_id: str) -> GetPollData:
+async def get_poll(poll_id: str)-> PollData:
     row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
-    return GetPollData(**row) if row else None
+    poll = PollData(**row) if row else None
+    return poll
 
-
-async def get_polls_by_signature(signature: str) -> CreatePollData:
-    rows = await db.fetchall("SELECT * FROM Polls WHERE signature = ?", (signature,))
-    return [CreatePollData(**row) for row in rows]
-
-
-async def get_polls() -> List[GetPollData]:
+async def get_polls() -> List[PollData]:
     rows = await db.fetchall("SELECT * FROM Polls")
-    return [GetPollData(**row) for row in rows]
+    return [PollData(**row) for row in rows]
 
+async def delete_poll(poll_id: str) -> None:
+    return await db.execute("DELETE FROM Polls WHERE id = ?", (poll_id,))
 
-# Needs signture of person who created poll
-async def delete_poll(signature: str, poll_id: str) -> None:
-    polls = await get_polls_by_signature(signature)
-    for poll in polls:
-        if poll.id == poll_id:
-            return await db.execute("DELETE FROM Polls WHERE id = ?", (poll_id,))
+async def get_users_count() -> int:
+    row = await db.fetchone("SELECT COUNT(*) as count FROM Users")
+    return row['count'] if row else 0
+
+async def update_poll(poll_id: str, user_id: str, opt_no: int) -> Optional[PollData]:
+    row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    if not row:
+        return None
+    voters = row['voters']
+    if voters:
+        voters += f",{user_id}"
     else:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"User doesny have permission to delete this poll",
-        )
+        voters = user_id
+    choices = json.loads(row['choices'])
+    if 0 <= opt_no < len(choices):
+        choices[opt_no][1] += 1
+    else:
+        raise ValueError("Invalid option number")
+    updated_choices_json = json.dumps(choices)
+    total_votes = sum(choice[1] for choice in choices)
+    total_users = await get_users_count()
+    complete = total_votes == total_users
+    await db.execute("UPDATE Polls SET choices = ?, voters = ?, complete = ? WHERE id = ?", 
+                     (updated_choices_json, voters, complete, poll_id))
+    updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    return PollData(**updated_row) if updated_row else None
 
+async def update_poll_confirm(poll_id: str, user_id: str) -> Optional[PollData]:
+    row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    if not row:
+        return None
+    confirms = row['confirms'] + 1
+    confirmers = row['confirmers']
+    if confirmers:
+        confirmers += f",{user_id}"
+    else:
+        confirmers = user_id
+    await db.execute("UPDATE Polls SET confirms = ?, confirmers = ? WHERE id = ?", (confirms, confirmers, poll_id))
+    updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    return PollData(**updated_row) if updated_row else None
 
-### Approvals
-
-
-async def create_approval(data: CreateVoteApprovalData) -> CreateVoteApprovalData:
-    user = await get_user(data.user_id)
-    if not user:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"User doesnt exist",
-        )
-
-    poll = await get_poll(data.poll_id)
-    if not poll:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"Poll does not exist",
-        )
-    approvals = await check_approvals(data.poll_id)
-    if approvals:
-        for approval in approvals:
-            if approval.user_id == data.user_id:
-                raise HTTPException(
-                    status_code=HTTPStatus.UNAUTHORIZED,
-                    detail=f"User has already approved",
-                )
-    if user.roll != 2:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"User must be on the steering group to approve",
-        )
-
-    approval_id = shortuuid.uuid()
-    await db.execute(
-        """
-        INSERT INTO Approvals (
-            id,
-            poll_id,
-            user_id
-        )
-        VALUES (?, ?, ?)
-        """,
-        (
-            approval_id,
-            data.poll_id,
-            data.user_id,
-        ),
-    )
-
-    return await get_poll(poll_id)
-
-
-async def check_approvals(poll_id: str) -> CreateVoteApprovalData:
-    rows = await db.fetchall("SELECT * FROM Approvals WHERE poll_id = ?", (poll_id,))
-    if not rows:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"Poll has no approvals",
-        )
-    [CreateVoteApprovalData(**row) for row in rows]
-
-
-### Votes
-
-
-async def create_vote(
-    data: CreateVoteData, inkey: Optional[str] = ""
-) -> CreateVoteData:
-    voteCheck = await get_vote_check(data.user_id)
-    if voteCheck:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"User has already voted",
-        )
-    vote_id = urlsafe_short_hash()
-    await db.execute(
-        """
-        INSERT INTO Vote (
-            id,
-            poll_id,
-            vote_opt,
-            user_id
-        )
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            vote_id,
-            data.poll_id,
-            data.vote_opt,
-            data.user_id,
-        ),
-    )
-    return await get_vote(data.signature)
-
-
-async def get_vote(vote_id: str) -> CreateVoteData:
-    row = await db.fetchone("SELECT * FROM Vote WHERE id = ?", (vote_id,))
-    return CreateVoteData(**row) if row else None
-
-async def get_vote_check(user_id: str) -> CreateVoteData:
-    row = await db.fetchone("SELECT * FROM Vote WHERE user_id = ?", (user_id,))
-    return CreateVoteData(**row) if row else None
-
-async def get_votes_poll(poll_id: str) -> CreateVoteData:
-    rows = await db.fetchall("SELECT * FROM Vote WHERE poll_id = ?", (poll_id,))
-    return [CreateVoteData(**row) for row in rows]
+async def get_vote(poll_id: str, user_id: str) -> Optional[dict]:
+    row = await db.fetchone("SELECT * FROM Votes WHERE poll_id = ? AND user_id = ?", (poll_id, user_id))
+    return row if row else None

@@ -1,11 +1,7 @@
-import json
-from sqlalchemy import text
-from fastapi import Request, FastAPI, HTTPException
-from pydantic import BaseModel
+from http import HTTPStatus
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
 from migrations import migrate
-from db import Database
 from crud import (
     create_user,
     get_user,
@@ -15,18 +11,14 @@ from crud import (
     get_poll,
     get_polls,
     delete_poll,
-    create_vote,
+    update_poll,
     get_vote,
-    get_vote_check,
-    get_votes_poll,
-    create_approval,
-    check_approvals,
+    update_poll_confirm,
 )
 from models import (
     CreateUserData,
-    CreateVoteData,
     CreatePollData,
-    CreateVoteApprovalData,
+    CreateVote,
 )
 
 ovs = FastAPI()
@@ -63,76 +55,151 @@ async def ovs_api_create_user(data: CreateUserData):
 @ovs.get("/user")
 async def ovs_api_get_user(user_id: str):
     user = await get_user(user_id)
+    print(user)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
 @ovs.get("/users")
-async def ovs_api_get_users():
+async def ovs_api_get_users(user_id: str):
+    user = await get_user(user_id)
+    if not user or user.roll != 2:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an admin",
+        )
     return await get_users()
 
 
 @ovs.delete("/user")
-async def ovs_api_delete_user(user_id: str):
+async def ovs_api_delete_user(user_id: str, admin_id: str):
+    user = await get_user(admin_id)
+    print(user);
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No admin found",
+        )
+    if user.roll != 2:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an admin",
+        )
+    user = await get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No admin found",
+        )
     return await delete_user(user_id)
 
 
 ### Polls
 
-
 @ovs.post("/poll")
 async def ovs_api_create_poll(data: CreatePollData):
-    return await create_poll(data)
-
+    user = await get_user(data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
+    poll = await create_poll(data)
+    return poll
 
 @ovs.get("/poll")
-async def ovs_api_get_poll(poll_id: str):
+async def ovs_api_get_poll(poll_id: str, user_id: str):
+    user = await get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
     return await get_poll(poll_id)
 
+@ovs.put("/poll")
+async def update_poll_vote(data: CreateVote):
+    user = await get_user(data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
+    poll = await get_poll(data.poll_id)
+    if not poll:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Poll not found.",
+        )
+    votecheck = await get_vote(data.poll_id, data.user_id)
+    if votecheck:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="User already voted",
+        )
+    if data.confirm:
+        if user.roll < 1:
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="Not an admin",
+            )
+        confirmers = poll.confirmers.split(",")
+        for confirmer in confirmers:
+            if confirmer == data.user_id:
+                raise HTTPException(
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                    detail="You already confirmed this poll",
+                )
+        poll = await update_poll_confirm(data.poll_id, data.user_id)
+        if not poll:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail="Poll not found",
+            )
+        return poll
+    if poll.confirms < 3:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not enough confirms",
+        )
+    voters = poll.voters.split(",")
+    for voter in voters:
+        if voter == data.user_id:
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="You already voted",
+            )
+    try:
+        updated_poll = await update_poll(data.poll_id, data.user_id, data.opt_no)
+        if not updated_poll:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail="Poll not found",
+            )
+        return updated_poll
+    except ValueError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=str(e),
+        )
 
 @ovs.get("/polls")
-async def ovs_api_get_polls():
+async def ovs_api_get_polls(user_id: str):
+    user = await get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
     return await get_polls()
 
-
-# Needs signature of the person who created poll
 @ovs.delete("/poll")
-async def ovs_api_delete_poll(signature: str, poll_id: str):
-    return await delete_poll(signature, poll_id)
-
-
-### Approvals
-
-
-@ovs.post("/approval")
-async def ovs_api_create_approval(data: CreateVoteApprovalData):
-    return await create_approval(data)
-
-
-@ovs.get("/approval")
-async def ovs_api_check_approval(poll_id: str) -> List[CreateVoteApprovalData]:
-    return await check_approvals(poll_id)
-
-
-### Votes
-
-
-@ovs.post("/vote")
-async def ovs_api_create_vote(data: CreateVoteData):
-    return await create_vote(data)
-
-
-@ovs.get("/vote")
-async def ovs_api_get_vote(vote_id: str) -> CreateVoteData:
-    return await get_vote(vote_id)
-
-
-@ovs.get("/votes")
-async def ovs_api_get_votes_poll(poll_id: str) -> List[CreateVoteData]:
-    return await get_votes_poll(poll_id)
-
-
-@ovs.get("/checkvotes")
-async def ovs_api_check_votes(user_id: str) -> List[CreateVoteData]:
-    return await get_vote_check(user_id)
+async def ovs_api_delete_poll(email: str, poll_id: str, user_id: str):
+    user = await get_user(user_id)
+    if user.roll != 2:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an admin",
+        )
+    return await delete_poll(email, poll_id)

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/s3.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
 
   <style>
     #myDialog {
@@ -186,6 +187,60 @@
       cursor: pointer;
     }
 
+    .success_notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #d7f8e8;
+      color: #1c7247;
+      padding: 10px 20px;
+      border: 1px solid #c6f5dc;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      /* Ensure it appears above other elements */
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 10px 20px;
+      border: 1px solid #f5c6cb;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      /* Ensure it appears above other elements */
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      background-color: #f3f3f3;
+      border-radius: 2px;
+      margin-top: 5px;
+    }
+
+    .progress-bar {
+      height: 5px;
+      background-color: #4caf50;
+      border-radius: 2px;
+      margin-bottom: 15px;
+    }
+
+    .tab button {
+      background-color: inherit;
+      float: left;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 10px;
+      transition: 0.3s;
+      font-size: 16px;
+    }
 
     input[type=submit]:hover {
       background-color: #45a049;
@@ -303,19 +358,31 @@
 
         </div>
         <p class="w3-center">Community polls for guiding decisions making.</p>
+        <p class="w3-center">Use your unique link/QRCode to login.</p>
 
         <div id="app">
+          <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">
+            {{ notification.message }}
+          </div>
+
+          <div v-if="success_notification.show" id="success_notification" class="success_notification"
+            v-if="success_notification.message">
+            {{ success_notification.message }}
+          </div>
+
           <div v-if="showTabs">
             <div class="tab">
               <button class="tablinks" @click="openCity($event, 'Active')">Active polls</button>
               <button class="tablinks" @click="openCity($event, 'Old')">Old polls</button>
               <button class="tablinks" @click="openCity($event, 'Suggest')">Suggest a poll</button>
-              <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'Review')">Polls in
+              <button v-if="user_details.roll > 0" class="tablinks" @click="openCity($event, 'Review')">Polls in
                 review*</button>
               <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userCreate')">Create a
                 user*</button>
               <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userDelete')">Delete a
                 user*</button>
+              <button v-if="user_details.roll == 2" class="tablinks"
+                @click="openCity($event, 'allUsers')">Users*</button>
             </div>
 
             <div id="Active" class="tabcontent">
@@ -324,9 +391,12 @@
                 <div v-for="(poll, pollIndex) in activePolls" :key="pollIndex" class="poll">
                   <p>{{ poll.title }}</p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
-                    <label :for="'choice' + pollIndex + '_' + index">{{ choice }}</label>
+                    <label :for="'choice' + pollIndex + '_' + index">{{ choice[0] }} ({{ choice[1] }})</label>
                     <input type="radio" :id="'choice' + pollIndex + '_' + index" :value="index" v-model="poll.picked"
-                      @change="submitVote(poll.id, index)" />
+                      @change="updatePoll({poll_id: poll.id, user_id: user_details.id, confirm: false, opt_no: index})" />
+                    <div class="progress-bar-container">
+                      <div class="progress-bar" :style="{ width: getVotePercentage(poll, choice) + '%' }"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -344,406 +414,559 @@
 
             <div id="Suggest" class="tabcontent">
               <h3>Suggest a poll</h3>
-              <form>
+              <form @submit.prevent="submitPoll">
                 <label for="pollTitle">Poll title:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle" v-model="newPoll.title">
                 <br></br>
                 <label for="choices">Choices: (separated by new lines)</label>
                 <br></br>
-                <textarea id="choices" name="choices" rows="10" cols="50"></textarea>
+                <textarea id="choices" name="choices" rows="10" cols="50" v-model="newPoll.choices"></textarea>
                 <br></br>
                 <button type="submit">Submit</button>
+              </form>
             </div>
 
-            <div id="Review" class="tabcontent">
+            <div v-if="user_details.roll > 0" id="Review" class="tabcontent">
               <h3>Polls in review</h3>
               <div class="polls-container">
-                <div v-for="(poll, pollIndex) in activePolls" :key="pollIndex" class="poll">
+                <div v-for="(poll, pollIndex) in pollsInReview" :key="pollIndex" class="poll">
                   <p>{{ poll.title }}</p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
-                    <label :for="'choice' + pollIndex + '_' + index">{{ choice }}</label>
+                    <label :for="'choice' + pollIndex + '_' + index">{{ choice[0] }}</label>
                   </div>
-                  <label>Approve</label>
-                  <input type="radio" id="poll.id" v-model="approvedPoll" @change="" />
+                  <button @click="updatePoll({ poll_id: poll.id, user_id: user_details.id, confirm: true })">Approve
+                    ({{poll.confirms}} so far)</button>
+
                 </div>
               </div>
             </div>
 
+
             <div v-if="user_details.roll == 2" id="userCreate" class="tabcontent">
               <h3>Create a user</h3>
-              <form>
-                <label for="pollTitle">Email:</label>
+              <form @submit.prevent="createUser">
+                <label for="email">Email:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"></input>
+                <input style="min-width: 400px;" type="text" id="email" v-model="newUser.email" name="email"></input>
                 <br></br>
-                <label for="choices">Roll:</label>
+                <label for="roll">Roll:</label>
                 <br></br>
-                <input id="choices" name="choices" rows="10" type="text" cols="50"></input>
+                <input id="roll" v-model="newUser.roll" name="roll" type="number"></input>
                 <br></br>
                 <button type="submit">Submit</button>
+              </form>
             </div>
 
             <div v-if="user_details.roll == 2" id="userDelete" class="tabcontent">
               <h3>Delete a user</h3>
-              <form>
-                <label for="pollTitle">Email:</label>
+              <form @submit.prevent="deleteUser">
+                <label for="deleteUserId">User ID:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
-                <br></br>
-                <label for="pollTitle">User ID:</label>
-                <br></br>
-                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <input style="min-width: 400px;" type="text" id="deleteUserId" v-model="deleteUserData.user_id"
+                  name="user_id">
                 <br></br>
                 <button type="submit">Submit</button>
+              </form>
             </div>
 
-          </div>
-          <div v-if="!showTabs">
-            <center> <button class="btnstyle" id="openDialog">Scan login qr</button></center>
-          </div>
-        </div>
-
-
-
-        <dialog id="myDialog">
-          <div style="border: 2px solid black">
-            <qrcode-stream :track="paintBoundingBox" @detect="onDetect" @error="onError"></qrcode-stream>
-          </div>
-          <button id="closeDialog">Close</button>
-        </dialog>
-
-      </div>
-    </div>
-
-
-
-    <!-- Grid -->
-    <div class="w3-container full-screen-section">
-      <div class="w3-row-padding" id="payments">
-        <div class="w3-center w3-padding-64">
-          <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Payments</span>
-
-        </div>
-        <p class="w3-center">Donate to Owensfield, or for members to pay their membership.</p>
-        <center>
-          <button class="btnstyle"
-            onClick="window.open('https://pay.collctiv.com/ocg-2024-membership-fee-24808', '_blank')">Pay or
-            donate</button>
-        </center>
-
-      </div>
-    </div>
-
-    <!-- Contact -->
-    <div class="w3-container">
-      <div class="w3-center w3-padding-64" id="contact">
-        <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Contact the steering group</span>
-      </div>
-
-      <form class="w3-container" action="/action_page.php" target="_blank">
-        <div class="w3-section">
-          <label>Name</label>
-          <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Name" required>
-        </div>
-        <div class="w3-section">
-          <label>Email</label>
-          <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Email" required>
-        </div>
-        <div class="w3-section">
-          <label>Subject</label>
-          <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Subject" required>
-        </div>
-        <div class="w3-section">
-          <label>Message</label>
-          <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Message" required>
-        </div>
-        <button type="submit" class="w3-button w3-block w3-black">Send</button>
-      </form>
-      <div class="w3-container">
-      </div>
-      <div class="w3-padding-64">
-        <span class="w3-large w3-bottombar w3-border-dark-grey w3-padding-16">Current steering group members</span>
-      </div>
-
-      <div class="w3-row-padding">
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Sarah</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
+            <div v-if="user_details.roll == 2" id="allUsers" class="tabcontent">
+              <h3>All users</h3>
+              <div v-for="user in users" :key="user.id">
+                <p>ID: {{ user.id }}, EMAIL: {{ user.email }}, ROLL: {{ user.roll }}</p>
+              </div>
             </div>
           </div>
         </div>
+        <!-- Grid -->
+        <div class="w3-container full-screen-section">
+          <div class="w3-row-padding" id="payments">
+            <div class="w3-center w3-padding-64">
+              <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Payments</span>
 
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Andy (7)</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
             </div>
+            <p class="w3-center">Donate to Owensfield, or for members to pay their membership.</p>
+            <center>
+              <button class="btnstyle"
+                onClick="window.open('https://pay.collctiv.com/ocg-2024-membership-fee-24808', '_blank')">Pay or
+                donate</button>
+            </center>
+
           </div>
         </div>
 
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Ian</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
-            </div>
+        <!-- Contact -->
+        <div class="w3-container">
+          <div class="w3-center w3-padding-64" id="contact">
+            <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Contact the steering group</span>
           </div>
-        </div>
 
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Sarah</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
+          <form class="w3-container" action="/action_page.php" target="_blank">
+            <div class="w3-section">
+              <label>Name</label>
+              <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Name"
+                required>
             </div>
-          </div>
-        </div>
-
-
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Mark</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
+            <div class="w3-section">
+              <label>Email</label>
+              <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Email"
+                required>
             </div>
-          </div>
-        </div>
-
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Angi</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
+            <div class="w3-section">
+              <label>Subject</label>
+              <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Subject" required>
             </div>
-          </div>
-        </div>
-
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
-
-            <div class="w3-container">
-              <h3>Mike</h3>
-              <p class="w3-opacity">Some text about why people might contact you.</p>
+            <div class="w3-section">
+              <label>Message</label>
+              <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Message" required>
             </div>
+            <button type="submit" class="w3-button w3-block w3-black">Send</button>
+          </form>
+          <div class="w3-container">
           </div>
-        </div>
+          <div class="w3-padding-64">
+            <span class="w3-large w3-bottombar w3-border-dark-grey w3-padding-16">Current steering group members</span>
+          </div>
 
-        <div class="w3-quarter w3-margin-bottom">
-          <div class="w3-card-4">
+          <div class="w3-row-padding">
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
 
-            <div class="w3-container">
-              <h3>Ben (25)</h3>
-              <p class="w3-opacity">Contact Ben for Google drive or the website.</p>
+                <div class="w3-container">
+                  <h3>Sarah</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Andy (7)</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Ian</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Sarah</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Mark</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Angi</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Mike</h3>
+                  <p class="w3-opacity">Some text about why people might contact you.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="w3-quarter w3-margin-bottom">
+              <div class="w3-card-4">
+
+                <div class="w3-container">
+                  <h3>Ben (25)</h3>
+                  <p class="w3-opacity">Contact Ben for Google drive or the website.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Footer -->
+      <!-- Footer -->
 
-  <footer class="w3-container w3-padding-32 w3-light-grey w3-center">
-    <h4>Footer</h4>
-    <a href="#" class="w3-button w3-black w3-margin"><i class="fa fa-arrow-up w3-margin-right"></i>To the top</a>
-    <div class="w3-xlarge w3-section">
-      <i class="fa fa-facebook-official w3-hover-opacity"></i>
-      <i class="fa fa-instagram w3-hover-opacity"></i>
-      <i class="fa fa-snapchat w3-hover-opacity"></i>
-      <i class="fa fa-pinterest-p w3-hover-opacity"></i>
-      <i class="w3-hover-opacity" onClick="window.open('https://ditto.pub/@owensfield@nostr.com', '_blank')"><img
-          src="./images/nostr.png"></i>
-      <i class="fa fa-linkedin w3-hover-opacity"></i>
-    </div>
-  </footer>
-  <script src="./js/vue-qrcode-reader.umd.js"></script>
-  <script>
-    new Vue({
-      el: '#app',
-      data: {
-        showTabs: false,
-        activeTab: '',
-        user_details: [],
-        activePolls: [{
-          id: "93fg34",
-          title: 'What we do with the old shed?',
-          choices: ['Repair it', 'Replace it', 'Remove it']
-        }, {
-          id: "93fg34",
-          title: 'What we do with the old shed?',
-          choices: ['Repair it', 'Replace it', 'Remove it']
-        }, {
-          id: "93fg34",
-          title: 'What we do with the old shed?',
-          choices: ['Repair it', 'Replace it', 'Remove it']
-        }, {
-          id: "93fg34",
-          title: 'What should we do with the old shed?',
-          choices: ['Repair it', 'Replace it', 'Remove it']
-        }],
-        oldPolls: [{
-          id: "93fg34",
-          title: 'What we do with the old shed?',
-          choice: 'Repair it'
-        }, {
-          id: "93fg34",
-          title: 'What we do with the old shed?',
-          choice: 'Repair it'
-        }, {
-          id: "93fg34",
-          title: 'What we do with the old shed?',
-          choice: 'Repair it'
-        }, {
-          id: "93fg34",
-          title: 'What should we do with the old shed?',
-          choice: 'Repair it'
-        }],
-        suggestPolls: [],
-        picked: 0,
-        approvedPoll: ""
-      },
-      methods: {
-        openCity(evt, cityName) {
-          var i, tabcontent, tablinks;
-          tabcontent = document.getElementsByClassName("tabcontent");
-          for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-          }
-          tablinks = document.getElementsByClassName("tablinks");
-          for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-          }
-          var cityElement = document.getElementById(cityName);
-          if (cityElement) {
-            cityElement.style.display = "block";
-            evt.currentTarget.className += " active";
-          } else {
-            console.error(`Element with ID ${cityName} not found.`);
-          }
-        },
-        async submitVote(pollId, pickedChoice) {
-          const voteData = {
-            user_id: this.user_details.id,
-            poll_id: pollId,
-            vote_opt: pickedChoice
-          };
+      <footer class="w3-container w3-padding-32 w3-light-grey w3-center">
+        <h4>Footer</h4>
+        <a href="#" class="w3-button w3-black w3-margin"><i class="fa fa-arrow-up w3-margin-right"></i>To the top</a>
+        <div class="w3-xlarge w3-section">
+          <i class="fa fa-facebook-official w3-hover-opacity"></i>
+          <i class="fa fa-instagram w3-hover-opacity"></i>
+          <i class="fa fa-snapchat w3-hover-opacity"></i>
+          <i class="fa fa-pinterest-p w3-hover-opacity"></i>
+          <i class="w3-hover-opacity" onClick="window.open('https://ditto.pub/@owensfield@nostr.com', '_blank')"><img
+              src="./images/nostr.png"></i>
+          <i class="fa fa-linkedin w3-hover-opacity"></i>
+        </div>
+      </footer>
 
-          try {
-            const response = await fetch('http://localhost:8000/vote', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: voteData
-            });
-
-            if (!response.ok) {
-              throw new Error('Network response was not ok ' + response.statusText);
-            }
-
-            const data = await response.json();
-            console.log('Vote submitted successfully:', data);
-          } catch (error) {
-            console.error('There has been a problem with your fetch operation:', error);
-          }
-        },
-        async getUser(userId) {
-          self = this;
-          console.log(this.backend_url);
-          try {
-            const response = await fetch(`http://localhost:8000/user?user_id=${userId}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json'
+      <script>
+        new Vue({
+          el: '#app',
+          data: {
+            showTabs: false,
+            activeTab: '',
+            user_details: [],
+            activePolls: [],
+            pollsInReview: [],
+            oldPolls: [],
+            suggestPolls: [],
+            showModal: false,
+            picked: 0,
+            newPoll: {
+              title: '',
+              choices: ''
+            },
+            approvedPoll: "",
+            notification: {
+              message: '',
+              show: false
+            },
+            success_notification: {
+              message: '',
+              show: false
+            },
+            users: [],
+            newUser: {
+              email: '',
+              roll: 0
+            },
+            qrCodeToShow: "",
+            deleteUserData: {
+              user_id: ''
+            },
+          },
+          methods: {
+            openCity(evt, cityName) {
+              var i, tabcontent, tablinks;
+              tabcontent = document.getElementsByClassName("tabcontent");
+              for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
               }
-            });
+              tablinks = document.getElementsByClassName("tablinks");
+              for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+              }
+              var cityElement = document.getElementById(cityName);
+              if (cityElement) {
+                cityElement.style.display = "block";
+                evt.currentTarget.className += " active";
+              } else {
+                console.error(`Element with ID ${cityName} not found.`);
+              }
+            },
+            async updatePoll(updateData) {
+              try {
+                const response = await fetch(`http://localhost:8000/poll`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(updateData)
+                });
 
-            if (!response.ok) {
-              throw new Error('Network response was not ok ' + response.statusText);
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+                this.showSuccessNotification('Poll updated successfully.');
+                this.getAllPolls(userId);
+              } catch (error) {
+                this.showNotification('You already updated poll.');
+              }
+            },
+            async getUser(userId) {
+              self = this;
+              try {
+                const response = await fetch(`http://localhost:8000/user?user_id=${userId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+                this.showSuccessNotification('Logged in.');
+                this.openCity(null, 'Active')
+                self.showTabs = true;
+                self.user_details = data;
+                this.getAllPolls(userId);
+                if (self.user_details.roll == 2) {
+                  this.getUsers(userId);
+                }
+              } catch (error) {
+                this.showNotification('There was an error logging in, please try again with correct ID.');
+                console.error('There has been a problem with your fetch operation:', error);
+              }
+            },
+            async getUsers() {
+              self = this;
+              try {
+                const response = await fetch(`http://localhost:8000/users?user_id=${self.user_details.id}`, {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+                console.log(data)
+                self.users = data;
+                // Process the data as needed
+              } catch (error) {
+                this.showNotification('There was an error fetching users, please try again.');
+                console.error('There has been a problem with your fetch operation:', error);
+              }
+            },
+            async getAllPolls(userId) {
+              self = this;
+              try {
+                const response = await fetch(`http://localhost:8000/polls?user_id=${userId}`, {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+
+                // Process the polls to split choices and format them
+                const processedPolls = data.map(poll => {
+                  const choices = JSON.parse(poll.choices);
+                  return {
+                    ...poll,
+                    choices: choices
+                  };
+                });
+
+                // Split the polls into activePolls, pollsInReview, and oldPolls
+                self.activePolls = processedPolls.filter(poll => poll.confirms >= 3 && !poll.complete);
+                self.pollsInReview = processedPolls.filter(poll => poll.confirms < 3 && !poll.complete);
+                self.oldPolls = processedPolls.filter(poll => poll.complete).map(poll => {
+                  const maxVotes = Math.max(...poll.choices.map(choice => choice[1]));
+                  const topChoices = poll.choices.filter(choice => choice[1] === maxVotes);
+
+                  if (topChoices.length > 1) {
+                    const drawChoice = "Draw: " + topChoices.map(choice => choice[0]).join(", ");
+                    return {
+                      ...poll,
+                      choice: drawChoice
+                    };
+                  } else {
+                    return {
+                      ...poll,
+                      choice: "Winner: " + topChoices[0][0].split(',')[0]
+                    };
+                  }
+                });
+              } catch (error) {
+                this.showNotification('There was an error fetching polls, please try again.');
+                console.error('There has been a problem with your fetch operation:', error);
+              }
+            },
+            async createUser() {
+              try {
+                const response = await fetch(`http://localhost:8000/user`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    admin_id: this.user_details.id,
+                    email: this.newUser.email,
+                    roll: this.newUser.roll
+                  })
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+                this.showSuccessNotification('User created successfully.');
+                this.getUsers();
+                // Reset form
+                this.newUser.email = '';
+                this.newUser.roll = 0;
+              } catch (error) {
+                this.showNotification('There was an error creating the user, please try again.');
+                console.error('There has been a problem with your fetch operation:', error);
+              }
+            },
+            async deleteUser() {
+              console.log(this.user_details.id);
+              console.log(this.deleteUserData.user_id);
+              try {
+                const response = await fetch(`http://localhost:8000/user`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    admin_id: this.user_details.id,
+                    user_id: this.deleteUserData.user_id
+                  })
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+                this.showSuccessNotification('User deleted successfully.');
+                console.log('User deleted successfully:', data);
+                // Reset form
+                this.deleteUserData.user_id = '';
+                // Refresh user list
+                this.getUsers();
+              } catch (error) {
+                this.showNotification('There was an error deleting the user, please try again.');
+                console.error('There has been a problem with your fetch operation:', error);
+              }
+            },
+            showNotification(message) {
+              this.notification.message = '';
+              this.notification.message = message;
+              this.notification.show = true;
+              setTimeout(() => {
+                this.notification.show = false;
+              }, 5000);
+            },
+            showSuccessNotification(message) {
+              this.success_notification.message = '';
+              this.success_notification.message = message;
+              this.success_notification.show = true;
+              setTimeout(() => {
+                this.success_notification.show = false;
+              }, 5000);
+            },
+            getVotePercentage(poll, choice) {
+              const totalVotes = poll.choices.reduce((sum, choice) => sum + choice[1], 0);
+              return totalVotes ? (choice[1] / totalVotes) * 100 : 0;
+            },
+            async submitPoll() {
+              this.sanitizeChoices();
+              const pollData = {
+                user_id: this.user_details.id,
+                title: this.newPoll.title,
+                choices: this.newPoll.choices,
+              };
+              try {
+                const response = await fetch('http://localhost:8000/poll', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(pollData)
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const data = await response.json();
+                this.showSuccessNotification('Poll submitted successfully.');
+                this.getAllPolls(pollData.user_id);
+                // Optionally, clear the form fields after successful submission
+                this.newPoll.title = '';
+                this.newPoll.choices = '';
+              } catch (error) {
+                this.showNotification('There was an error submitting the poll. Please try again.');
+              }
+            },
+            sanitizeChoices() {
+              this.newPoll.choices = this.newPoll.choices.map(choice => choice.replace(/,/g, ''));
+            },
+            startFunct() {
+              const urlParams = new URLSearchParams(window.location.search);
+              userId = urlParams.get('id');
+              if (userId) {
+                this.getUser(userId);
+              }
+            }
+          },
+          mounted() {
+            this.notification.message = '';
+            const backend_url = 'http://127.0.0.1:8000';
+            var slideIndex = 1;
+            showDivs(slideIndex);
+
+            // Auto-scroll every 3 seconds
+            setInterval(function () {
+              plusDivs(1);
+            }, 3000);
+
+            function plusDivs(n) {
+              showDivs(slideIndex += n);
             }
 
-            const data = await response.json();
-            console.log(data); // Log the result to the console
-            this.openCity(null, 'Active')
-            self.showTabs = true;
-            self.user_details = data;
-            // Check if the response is positive
-            if (data.positive) {
-
+            function currentDiv(n) {
+              showDivs(slideIndex = n);
             }
-          } catch (error) {
-            console.error('There has been a problem with your fetch operation:', error);
+
+            function showDivs(n) {
+              var i;
+              var x = document.getElementsByClassName("mySlides");
+              var dots = document.getElementsByClassName("demodots");
+              if (n > x.length) { slideIndex = 1 }
+              if (n < 1) { slideIndex = x.length }
+              for (i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+              }
+              for (i = 0; i < dots.length; i++) {
+                dots[i].className = dots[i].className.replace(" w3-white", "");
+              }
+              x[slideIndex - 1].style.display = "block";
+            }
+            this.startFunct();
+            self = this;
+            this.notification.show = false;
           }
-        },
-        getIdFromUrl() {
-          const urlParams = new URLSearchParams(window.location.search);
-          userId = urlParams.get('id');
-          if (userId) {
-            this.getUser(userId);
-          }
-        }
-
-      },
-      mounted() {
-        const backend_url = 'http://127.0.0.1:8000';
-        var slideIndex = 1;
-        showDivs(slideIndex);
-
-        // Auto-scroll every 3 seconds
-        setInterval(function () {
-          plusDivs(1);
-        }, 3000);
-
-        function plusDivs(n) {
-          showDivs(slideIndex += n);
-        }
-
-        function currentDiv(n) {
-          showDivs(slideIndex = n);
-        }
-
-        function showDivs(n) {
-          var i;
-          var x = document.getElementsByClassName("mySlides");
-          var dots = document.getElementsByClassName("demodots");
-          if (n > x.length) { slideIndex = 1 }
-          if (n < 1) { slideIndex = x.length }
-          for (i = 0; i < x.length; i++) {
-            x[i].style.display = "none";
-          }
-          for (i = 0; i < dots.length; i++) {
-            dots[i].className = dots[i].className.replace(" w3-white", "");
-          }
-          x[slideIndex - 1].style.display = "block";
-        }
-        const video = document.getElementById('qr-video');
-        const resultElement = document.getElementById('qr-result');
-        let scannedData = '';
-        const openButton = document.getElementById('openDialog');
-        const closeButton = document.getElementById('closeDialog');
-        const dialog = document.getElementById('myDialog');
-        openButton.addEventListener('click', () => {
-          dialog.showModal();
         });
-        closeButton.addEventListener('click', () => {
-          dialog.close();
-        });
-        const userId = this.getIdFromUrl();
-        this.getIdFromUrl()
-      }
-    });
 
-  </script>
+      </script>
 
 </body>
 

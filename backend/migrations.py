@@ -18,26 +18,21 @@ def migrate():
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Polls
                   (id TEXT PRIMARY KEY,
-                  signature TEXT,
                   title TEXT, 
-                  options TEXT, 
-                  active INTEGER,
-                  closing_date TEXT,
+                  choices TEXT, 
+                  confirms INTEGER,
+                  confirmers TEXT,
+                  voters TEXT,
+                  complete BOOLEAN,
                   timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
     )
 
     cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Approvals
+        """CREATE TABLE IF NOT EXISTS votes
                   (id TEXT PRIMARY KEY,
                   poll_id TEXT, 
-                  user_id TEXT)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Vote
-                  (id TEXT PRIMARY KEY,
-                  poll_id TEXT, 
-                  vote_opt INTEGER)"""
+                  user_id TEXT,
+                  timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
     )
 
     connection.commit()

@@ -153,6 +153,43 @@
       background-color: #f9f9f9;
       /* Optional: Add a background color */
     }
+
+    input[type=text],
+    select {
+      width: 400px;
+      padding: 12px 20px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      width: 400px;
+      height: 150px;
+      padding: 12px 20px;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      resize: none;
+    }
+
+    input[type=submit] {
+      width: 400px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 14px 20px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+
+    input[type=submit]:hover {
+      background-color: #45a049;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 </head>
@@ -275,8 +312,10 @@
               <button class="tablinks" @click="openCity($event, 'Suggest')">Suggest a poll</button>
               <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'Review')">Polls in
                 review*</button>
-                <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userCreate')">Create a user*</button>
-                <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userDelete')">Delete a user*</button>
+              <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userCreate')">Create a
+                user*</button>
+              <button v-if="user_details.roll == 2" class="tablinks" @click="openCity($event, 'userDelete')">Delete a
+                user*</button>
             </div>
 
             <div id="Active" class="tabcontent">
@@ -286,7 +325,8 @@
                   <p>{{ poll.title }}</p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
                     <label :for="'choice' + pollIndex + '_' + index">{{ choice }}</label>
-                    <input type="radio" :id="'choice' + pollIndex + '_' + index" :value="index" v-model="poll.picked" @change="submitVote(poll.id, index)"/>
+                    <input type="radio" :id="'choice' + pollIndex + '_' + index" :value="index" v-model="poll.picked"
+                      @change="submitVote(poll.id, index)" />
                   </div>
                 </div>
               </div>
@@ -297,7 +337,7 @@
               <div class="polls-container">
                 <div v-for="(poll, pollIndex) in oldPolls" :key="pollIndex" class="poll">
                   <p>{{ poll.title }}</p>
-                    <label>{{ poll.choice }}</label>
+                  <label>{{ poll.choice }}</label>
                 </div>
               </div>
             </div>
@@ -325,7 +365,7 @@
                     <label :for="'choice' + pollIndex + '_' + index">{{ choice }}</label>
                   </div>
                   <label>Approve</label>
-                  <input type="radio" id="poll.id" v-model="approvedPoll" @change=""/>
+                  <input type="radio" id="poll.id" v-model="approvedPoll" @change="" />
                 </div>
               </div>
             </div>
@@ -335,11 +375,11 @@
               <form>
                 <label for="pollTitle">Email:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle">
+                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"></input>
                 <br></br>
                 <label for="choices">Roll:</label>
                 <br></br>
-                <input id="choices" name="choices" rows="10" cols="50"></input>
+                <input id="choices" name="choices" rows="10" type="text" cols="50"></input>
                 <br></br>
                 <button type="submit">Submit</button>
             </div>
@@ -542,11 +582,11 @@
           id: "93fg34",
           title: 'What we do with the old shed?',
           choices: ['Repair it', 'Replace it', 'Remove it']
-        },{
+        }, {
           id: "93fg34",
           title: 'What we do with the old shed?',
           choices: ['Repair it', 'Replace it', 'Remove it']
-        },{
+        }, {
           id: "93fg34",
           title: 'What should we do with the old shed?',
           choices: ['Repair it', 'Replace it', 'Remove it']
@@ -559,11 +599,11 @@
           id: "93fg34",
           title: 'What we do with the old shed?',
           choice: 'Repair it'
-        },{
+        }, {
           id: "93fg34",
           title: 'What we do with the old shed?',
           choice: 'Repair it'
-        },{
+        }, {
           id: "93fg34",
           title: 'What should we do with the old shed?',
           choice: 'Repair it'
@@ -592,31 +632,31 @@
           }
         },
         async submitVote(pollId, pickedChoice) {
-        const voteData = {
-          user_id: this.user_details.id,
-          poll_id: pollId,
-          vote_opt: pickedChoice
-        };
+          const voteData = {
+            user_id: this.user_details.id,
+            poll_id: pollId,
+            vote_opt: pickedChoice
+          };
 
-        try {
-          const response = await fetch('http://localhost:8000/vote', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: voteData
-          });
+          try {
+            const response = await fetch('http://localhost:8000/vote', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: voteData
+            });
 
-          if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const data = await response.json();
+            console.log('Vote submitted successfully:', data);
+          } catch (error) {
+            console.error('There has been a problem with your fetch operation:', error);
           }
-
-          const data = await response.json();
-          console.log('Vote submitted successfully:', data);
-        } catch (error) {
-          console.error('There has been a problem with your fetch operation:', error);
-        }
-      },
+        },
         async getUser(userId) {
           self = this;
           console.log(this.backend_url);

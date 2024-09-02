@@ -686,7 +686,7 @@
             },
             async updatePoll(updateData) {
               try {
-                const response = await fetch(`http://localhost:8000/poll`, {
+                const response = await fetch(`http://170.75.167.10:8000/poll`, {
                   method: 'PUT',
                   headers: {
                     'Content-Type': 'application/json'
@@ -708,7 +708,7 @@
             async getUser(userId) {
               self = this;
               try {
-                const response = await fetch(`http://localhost:8000/user?user_id=${userId}`, {
+                const response = await fetch(`http://170.75.167.10:8000/user?user_id=${userId}`, {
                   method: 'GET',
                   headers: {
                     'Content-Type': 'application/json'
@@ -736,7 +736,7 @@
             async getUsers() {
               self = this;
               try {
-                const response = await fetch(`http://localhost:8000/users?user_id=${self.user_details.id}`, {
+                const response = await fetch(`http://170.75.167.10:8000/users?user_id=${self.user_details.id}`, {
                   method: 'GET',
                   headers: {
                     'Content-Type': 'application/json'
@@ -759,7 +759,7 @@
             async getAllPolls(userId) {
               self = this;
               try {
-                const response = await fetch(`http://localhost:8000/polls?user_id=${userId}`, {
+                const response = await fetch(`http://170.75.167.10:8000/polls?user_id=${userId}`, {
                   method: 'GET',
                   headers: {
                     'Content-Type': 'application/json'
@@ -808,7 +808,7 @@
             },
             async createUser() {
               try {
-                const response = await fetch(`http://localhost:8000/user`, {
+                const response = await fetch(`http://170.75.167.10:8000/user`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json'
@@ -839,7 +839,7 @@
               console.log(this.user_details.id);
               console.log(this.deleteUserData.user_id);
               try {
-                const response = await fetch(`http://localhost:8000/user`, {
+                const response = await fetch(`http://170.75.167.10:8000/user`, {
                   method: 'DELETE',
                   headers: {
                     'Content-Type': 'application/json'
@@ -894,7 +894,7 @@
                 choices: this.newPoll.choices,
               };
               try {
-                const response = await fetch('http://localhost:8000/poll', {
+                const response = await fetch('http://170.75.167.10:8000/poll', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json'

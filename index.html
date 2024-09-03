@@ -413,7 +413,7 @@
                 </div>
               </div>
             </div>
-        
+
             <div id="Old" class="tabcontent">
               <h3>Old Polls</h3>
               <div class="polls-container">
@@ -452,6 +452,7 @@
                   <button @click="updatePoll({ poll_id: poll.id, user_id: user_details.id, confirm: true })">
                     Approve ({{poll.confirms}} so far)
                   </button>
+                  <button @click="deletePoll(poll.id)">Delete</button>
                 </div>
               </div>
             </div>
@@ -884,6 +885,30 @@
                 this.showNotification('There was an error deleting the user, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);
               }
+            },
+            deletePoll(pollId) {
+              const payload = {
+                user_id: this.user_details.id,
+                poll_id: pollId
+              };
+              fetch('/poll', {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+              })
+                .then(response => response.json())
+                .then(data => {
+                  console.log('Poll deleted:', data);
+                  this.getAllPolls(this.user_details.id);
+                  this.showSuccessNotification('Poll deleted.');
+                  // Remove the poll from the list
+                  this.pollsInReview = this.pollsInReview.filter(poll => poll.id !== pollId);
+                })
+                .catch(error => {
+                  console.error('Error deleting poll:', error);
+                });
             },
             showNotification(message) {
               this.notification.message = '';

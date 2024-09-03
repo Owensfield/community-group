@@ -205,11 +205,11 @@ async def ovs_api_get_polls(user_id: str):
     return await get_polls()
 
 @ovs.delete("/poll")
-async def ovs_api_delete_poll(email: str, poll_id: str, user_id: str):
+async def ovs_api_delete_poll(poll_id: str, user_id: str):
     user = await get_user(user_id)
-    if user.roll != 2:
+    if user.roll > 0:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Not an admin",
         )
-    return await delete_poll(email, poll_id)
+    return await delete_poll(poll_id)

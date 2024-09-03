@@ -917,7 +917,9 @@
               }
             },
             sanitizeChoices() {
-              this.newPoll.choices = this.newPoll.choices.map(choice => choice.replace(/,/g, ''));
+              for (let i = 0; i < this.newPoll.choices.length; i++) {
+                this.newPoll.choices[i] = this.newPoll.choices[i].replace(/,/g, ';');
+              }
             },
             startFunct() {
               const urlParams = new URLSearchParams(window.location.search);

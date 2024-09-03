@@ -140,10 +140,15 @@
 
     .polls-container {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      /* Two columns */
-      gap: 20px;
-      /* Space between the grid items */
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      /* Adjust the gap between columns as needed */
+    }
+
+    @media (max-width: 768px) {
+      .polls-container {
+        grid-template-columns: 1fr;
+      }
     }
 
     .poll {

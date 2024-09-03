@@ -401,7 +401,7 @@
               <h3>Active Polls</h3>
               <div class="polls-container">
                 <div v-for="(poll, pollIndex) in activePolls" :key="pollIndex" class="poll">
-                  <p>{{ poll.title }}</p>
+                  <p v-html="convertLinks(poll.title)"></p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
                     <label :for="'choice' + pollIndex + '_' + index">{{ choice[0] }} ({{ choice[1] }})</label>
                     <input type="radio" :id="'choice' + pollIndex + '_' + index" :value="index" v-model="poll.picked"
@@ -413,12 +413,12 @@
                 </div>
               </div>
             </div>
-
+        
             <div id="Old" class="tabcontent">
               <h3>Old Polls</h3>
               <div class="polls-container">
                 <div v-for="(poll, pollIndex) in oldPolls" :key="pollIndex" class="poll">
-                  <p>{{ poll.title }}</p>
+                  <p v-html="convertLinks(poll.title)"></p>
                   <label>{{ poll.choice }}</label>
                 </div>
               </div>
@@ -445,13 +445,13 @@
               <h3>Polls in review</h3>
               <div class="polls-container">
                 <div v-for="(poll, pollIndex) in pollsInReview" :key="pollIndex" class="poll">
-                  <p>{{ poll.title }}</p>
+                  <p v-html="convertLinks(poll.title)"></p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
                     <label :for="'choice' + pollIndex + '_' + index">{{ choice[0] }}</label>
                   </div>
-                  <button @click="updatePoll({ poll_id: poll.id, user_id: user_details.id, confirm: true })">Approve
-                    ({{poll.confirms}} so far)</button>
-
+                  <button @click="updatePoll({ poll_id: poll.id, user_id: user_details.id, confirm: true })">
+                    Approve ({{poll.confirms}} so far)
+                  </button>
                 </div>
               </div>
             </div>
@@ -770,6 +770,10 @@
                 this.showNotification('There was an error fetching users, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);
               }
+            },
+            convertLinks(text) {
+              const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+              return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
             },
             async getAllPolls(userId) {
               self = this;

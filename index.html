@@ -151,6 +151,16 @@
       }
     }
 
+    .responsive-input {
+      min-width: 400px;
+    }
+
+    @media (max-width: 768px) {
+      .responsive-input {
+        min-width: 100%;
+      }
+    }
+
     .poll {
       border: 1px solid #ccc;
       /* Optional: Add some styling to the poll items */
@@ -162,7 +172,6 @@
 
     input[type=text],
     select {
-      width: 400px;
       padding: 12px 20px;
       margin: 8px 0;
       display: inline-block;
@@ -172,7 +181,6 @@
     }
 
     textarea {
-      width: 400px;
       height: 150px;
       padding: 12px 20px;
       box-sizing: border-box;
@@ -182,7 +190,6 @@
     }
 
     input[type=submit] {
-      width: 400px;
       background-color: #4CAF50;
       color: white;
       padding: 14px 20px;
@@ -422,11 +429,13 @@
               <form @submit.prevent="submitPoll">
                 <label for="pollTitle">Poll title:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle" v-model="newPoll.title">
+                <input class="responsive-input" style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"
+                  v-model="newPoll.title">
                 <br></br>
                 <label for="choices">Choices: (separated by new lines)</label>
                 <br></br>
-                <textarea id="choices" name="choices" rows="10" cols="50" v-model="newPoll.choices"></textarea>
+                <textarea class="responsive-input" id="choices" name="choices" rows="10" cols="50"
+                  v-model="newPoll.choices"></textarea>
                 <br></br>
                 <button type="submit">Submit</button>
               </form>
@@ -453,11 +462,12 @@
               <form @submit.prevent="createUser">
                 <label for="email">Email:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="email" v-model="newUser.email" name="email"></input>
+                <input class="responsive-input" style="min-width: 400px;" type="text" id="email" v-model="newUser.email"
+                  name="email"></input>
                 <br></br>
                 <label for="roll">Roll:</label>
                 <br></br>
-                <input id="roll" v-model="newUser.roll" name="roll" type="number"></input>
+                <input class="responsive-input" id="roll" v-model="newUser.roll" name="roll" type="number"></input>
                 <br></br>
                 <button type="submit">Submit</button>
               </form>
@@ -468,8 +478,8 @@
               <form @submit.prevent="deleteUser">
                 <label for="deleteUserId">User ID:</label>
                 <br></br>
-                <input style="min-width: 400px;" type="text" id="deleteUserId" v-model="deleteUserData.user_id"
-                  name="user_id">
+                <input class="responsive-input" style="min-width: 400px;" type="text" id="deleteUserId"
+                  v-model="deleteUserData.user_id" name="user_id">
                 <br></br>
                 <button type="submit">Submit</button>
               </form>

@@ -971,6 +971,17 @@
               const urlParams = new URLSearchParams(window.location.search);
               userId = urlParams.get('id');
 
+              // set in localstorge otherwise checkit exists and use
+              if (userId) {
+                localStorage.setItem("userId", userId);
+                this.getUser(userId);
+              }
+              else {
+                userId = localStorage.getItem("userId");
+                if (userId) {
+                  this.getUser(userId);
+                }
+              }
               // remove the ID
               if (urlParams.has('id')) {
                 urlParams.delete('id');
@@ -979,18 +990,6 @@
                   window.history.replaceState(null, '', window.location.pathname);
                 } else {
                   window.history.replaceState(null, '', newUrl);
-                }
-              }
-
-              // set in localstorge otherwise checkit exists and use
-              if (userId) {
-                this.localStorage.setItem("userId", userId);
-                this.getUser(userId);
-              }
-              else {
-                userId = localStorage.getItem("userId");
-                if (userId) {
-                  this.getUser(userId);
                 }
               }
             }

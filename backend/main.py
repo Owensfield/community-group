@@ -168,7 +168,7 @@ async def update_poll_vote(data: CreateVote):
                 detail="Poll not found",
             )
         return poll
-    if poll.confirms < 3:
+    if poll.confirms < 4:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Not enough confirms",

@@ -257,6 +257,12 @@
     input[type=submit]:hover {
       background-color: #45a049;
     }
+
+    .w3-input[disabled], .w3-button[disabled] {
+    background-color: #f1f1f1;
+    color: #a0a0a0;
+    cursor: not-allowed;
+  }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 </head>
@@ -533,23 +539,21 @@
             <form class="w3-container" action="/action_page.php" target="_blank">
               <div class="w3-section">
                 <label>Name</label>
-                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Name"
-                  required>
+                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Name" required disabled title="This form is currently disabled.">
               </div>
               <div class="w3-section">
                 <label>Email</label>
-                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Email"
-                  required>
+                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Email" required disabled title="This form is currently disabled.">
               </div>
               <div class="w3-section">
                 <label>Subject</label>
-                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Subject" required>
+                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Subject" required disabled title="This form is currently disabled.">
               </div>
               <div class="w3-section">
                 <label>Message</label>
-                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Message" required>
+                <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Message" required disabled title="This form is currently disabled.">
               </div>
-              <button type="submit" class="w3-button w3-block w3-black">Send</button>
+              <button type="submit" class="w3-button w3-block w3-black" disabled title="This form is currently disabled.">Send</button>
             </form>
             <div class="w3-container">
             </div>

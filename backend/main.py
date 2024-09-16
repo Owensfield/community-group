@@ -1,3 +1,10 @@
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse, PlainTextResponse
+import httpx
+import os
+import base64
+from typing import List
+from pydantic import BaseModel
 from http import HTTPStatus
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +30,14 @@ from models import (
 
 ovs = FastAPI()
 
+# Configuration
+GITHUB_API_BASE = "https://api.github.com"
+REPO_OWNER = "arcbtc"
+REPO_NAME = "Owensfield/docs"
+DOCS_PATH = "2024"
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+
+
 migrate()  # Call without 'await'
 
 origins = [
@@ -41,6 +56,7 @@ ovs.add_middleware(
     allow_headers=["*"],
 )
 
+
 @ovs.on_event("startup")
 async def startup_event():
     user_data = CreateUserData(admin_id="admin", email="benh@lnbits.com", roll=2)
@@ -49,6 +65,7 @@ async def startup_event():
         print("User created successfully: ", user)
     except Exception as e:
         print(f"Error creating user: {e}")
+
 
 @ovs.post("/user")
 async def ovs_api_create_user(data: CreateUserData):
@@ -84,7 +101,7 @@ async def ovs_api_get_users(user_id: str):
 @ovs.delete("/user")
 async def ovs_api_delete_user(user_id: str, admin_id: str):
     user = await get_user(admin_id)
-    print(user);
+    print(user)
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -106,6 +123,7 @@ async def ovs_api_delete_user(user_id: str, admin_id: str):
 
 ### Polls
 
+
 @ovs.post("/poll")
 async def ovs_api_create_poll(data: CreatePollData):
     user = await get_user(data.user_id)
@@ -117,6 +135,7 @@ async def ovs_api_create_poll(data: CreatePollData):
     poll = await create_poll(data)
     return poll
 
+
 @ovs.get("/poll")
 async def ovs_api_get_poll(poll_id: str, user_id: str):
     user = await get_user(user_id)
@@ -126,6 +145,7 @@ async def ovs_api_get_poll(poll_id: str, user_id: str):
             detail="No user found",
         )
     return await get_poll(poll_id)
+
 
 @ovs.put("/poll")
 async def update_poll_vote(data: CreateVote):
@@ -193,6 +213,7 @@ async def update_poll_vote(data: CreateVote):
             detail=str(e),
         )
 
+
 @ovs.get("/polls")
 async def ovs_api_get_polls(user_id: str):
     user = await get_user(user_id)
@@ -203,6 +224,7 @@ async def ovs_api_get_polls(user_id: str):
         )
     return await get_polls()
 
+
 @ovs.delete("/poll")
 async def ovs_api_delete_poll(poll_id: str, user_id: str):
     user = await get_user(user_id)
@@ -212,3 +234,61 @@ async def ovs_api_delete_poll(poll_id: str, user_id: str):
             detail="Not an admin",
         )
     return await delete_poll(poll_id)
+
+
+### DOCS
+
+
+class DocFile(BaseModel):
+    name: str
+    path: str
+
+
+@ovs.get("/api/docs", response_model=List[DocFile])
+async def get_docs(user_id: str):
+    user = await get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
+    url = f"{GITHUB_API_BASE}/repos/{REPO_NAME}/contents/{DOCS_PATH}"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+    if response.status_code == 200:
+        files = [
+            DocFile(name=file["name"], path=file["path"])
+            for file in response.json()
+            if file["name"].endswith(".md")
+        ]
+        return files
+    else:
+        raise HTTPException(status_code=500, detail="Failed to fetch docs")
+
+
+@ovs.get("/api/docs/{filename}", response_class=PlainTextResponse)
+async def get_doc_content(filename: str, user_id: str):
+    user = await get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
+    url = f"{GITHUB_API_BASE}/repos/{REPO_NAME}/contents/{DOCS_PATH}/{filename}"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+
+    if response.status_code == 200:
+        content = response.json()["content"]
+        decoded_content = base64.b64decode(content).decode("utf-8")
+        return decoded_content
+    else:
+        raise HTTPException(status_code=500, detail="Failed to fetch doc content")

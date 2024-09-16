@@ -744,10 +744,10 @@
                 this.fetchDocs(userId);
                 const data = await response.json();
                 this.showSuccessNotification('Logged in.');
-                this.openTab(event, 'Active')
                 self.showTabs = true;
                 self.user_details = data;
                 this.getAllPolls(userId);
+                this.openTab(null, 'Active');
                 if (self.user_details.roll == 2) {
                   this.getUsers(userId);
                 }

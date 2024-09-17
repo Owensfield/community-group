@@ -63,13 +63,7 @@ async def get_users() -> List[UserData]:
 
 
 async def delete_user(user_id: str) -> None:
-    user = await get_user(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail=f"User doesnt exist",
-        )
-    await db.execute("DELETE FROM Users WHERE id = ?", (user_id,))
+    return await db.execute("DELETE FROM Users WHERE id = ?", (user_id,))
 
 
 ### Polls

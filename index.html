@@ -879,18 +879,12 @@
           }
         },
         async deleteUser() {
-          console.log(this.user_details.id);
-          console.log(this.deleteUserData.user_id);
           try {
-            const response = await fetch(`${API_BASE_URL}/user`, {
+            const response = await fetch(API_BASE_URL + '/user?admin_id=' + this.user_details.id, + '&user_id=' + this.deleteUserData.user_id, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                admin_id: this.user_details.id,
-                user_id: this.deleteUserData.user_id
-              })
+              }
             });
 
             if (!response.ok) {

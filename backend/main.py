@@ -116,7 +116,7 @@ async def ovs_api_delete_user(user_id: str, admin_id: str):
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail="No admin found",
+            detail="No user found",
         )
     return await delete_user(user_id)
 

@@ -741,7 +741,7 @@
             this.showSuccessNotification('Poll updated successfully.');
             this.getAllPolls(userId);
           } catch (error) {
-            this.showNotification('You already updated poll.');
+            this.showNotification(error);
           }
         },
         async getUser(userId) {

@@ -826,8 +826,8 @@
             });
 
             // Split the polls into activePolls, pollsInReview, and oldPolls
-            self.activePolls = processedPolls.filter(poll => poll.confirms >= 3 && !poll.complete);
-            self.pollsInReview = processedPolls.filter(poll => poll.confirms < 3 && !poll.complete);
+            self.activePolls = processedPolls.filter(poll => poll.confirms >= 4 && !poll.complete);
+            self.pollsInReview = processedPolls.filter(poll => poll.confirms < 4 && !poll.complete);
             self.oldPolls = processedPolls.filter(poll => poll.complete).map(poll => {
               const maxVotes = Math.max(...poll.choices.map(choice => choice[1]));
               const topChoices = poll.choices.filter(choice => choice[1] === maxVotes);
@@ -1081,9 +1081,6 @@
         this.startFunct();
         self = this;
         this.notification.show = false;
-        document.addEventListener("DOMContentLoaded", function () {
-          openTab(null, 'Active');
-        });
       }
     });
 

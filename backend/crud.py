@@ -140,7 +140,8 @@ async def update_poll(poll_id: str, user_id: str, opt_no: int) -> Optional[PollD
     updated_choices_json = json.dumps(choices)
     total_votes = sum(choice[1] for choice in choices)
     total_users = await get_users_count()
-    complete = total_votes == total_users
+    threshold = (total_users * 2) * 0.51  # 51% threshold
+    complete = total_votes > threshold
     await db.execute("UPDATE Polls SET choices = ?, voters = ?, complete = ? WHERE id = ?", 
                      (updated_choices_json, voters, complete, poll_id))
     updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))

@@ -193,11 +193,14 @@ async def update_poll_vote(data: CreateVote):
             detail="Not enough confirms",
         )
     voters = poll.voters.split(",")
+    count = 0
     for voter in voters:
         if voter == data.user_id:
+            count += 1
+        if count >= 2:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
-                detail="You already voted",
+                detail="You already voted twice",
             )
     try:
         updated_poll = await update_poll(data.poll_id, data.user_id, data.opt_no)

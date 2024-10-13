@@ -293,6 +293,10 @@
       row-gap: 20px;
       /* Space between rows */
     }
+
+    .greyed-out {
+      color: grey;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 </head>
@@ -418,10 +422,10 @@
             <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Polls</span>
 
           </div>
-          <div v-if="user_details" >
-          <p class="w3-center">Community polls for guiding decisions making.</p>
-          <p class="w3-center">Use your unique link/QRCode to login.</p>
-        </div>
+          <div v-if="user_details">
+            <p class="w3-center">Community polls for guiding decisions making.</p>
+            <p class="w3-center">Use your unique link/QRCode to login.</p>
+          </div>
 
           <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">
             {{ notification.message }}
@@ -470,6 +474,12 @@
                 <div v-for="(poll, pollIndex) in oldPolls" :key="pollIndex" class="poll">
                   <p v-html="convertLinks(poll.title)"></p>
                   <label>{{ poll.choice }}</label>
+                  <ul>
+                    <li v-for="(choice, choiceIndex) in poll.choices" :key="choiceIndex"
+                      :class="{ 'greyed-out': !choice.isTopChoice }">
+                      {{ choice.name }} ({{ choice.votes }} votes)
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -489,8 +499,8 @@
                 <br></br>
                 <label>Number of weeks yo run for </label>
                 <br></br>
-                <input class="responsive-input" style="min-width: 400px;" type="number" max="10" id="pollDuration" name="pollDuration"
-                  v-model="newPoll.duration"></input>
+                <input class="responsive-input" style="min-width: 400px;" type="number" max="10" id="pollDuration"
+                  name="pollDuration" v-model="newPoll.duration"></input>
                 <br></br>
                 <button type="submit">Submit</button>
               </form>
@@ -549,7 +559,7 @@
             </div>
           </div>
         </div>
-      </div>    
+      </div>
 
       <!-- Grid -->
       <div class="w3-container full-screen-section">
@@ -866,18 +876,28 @@
               const maxVotes = Math.max(...poll.choices.map(choice => choice[1]));
               const topChoices = poll.choices.filter(choice => choice[1] === maxVotes);
 
+              let resultChoices = poll.choices.map(choice => {
+                return {
+                  name: choice[0],
+                  votes: choice[1],
+                  isTopChoice: choice[1] === maxVotes
+                };
+              });
+
+              resultChoices.sort((a, b) => b.votes - a.votes); // Sort choices by votes in descending order
+
+              const result = {
+                ...poll,
+                choices: resultChoices
+              };
+
               if (topChoices.length > 1) {
-                const drawChoice = "Draw: " + topChoices.map(choice => choice[0]).join(", ");
-                return {
-                  ...poll,
-                  choice: drawChoice
-                };
+                result.choice = "Draw: " + topChoices.map(choice => choice[0]).join(", ");
               } else {
-                return {
-                  ...poll,
-                  choice: "Winner: " + topChoices[0][0].split(',')[0]
-                };
+                result.choice = "Winner: " + topChoices[0][0];
               }
+
+              return result;
             });
           } catch (error) {
             this.showNotification('There was an error fetching polls, please try again.');

@@ -35,6 +35,14 @@ def migrate():
                   timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
     )
 
+    cursor.execute(
+        """ ALTER TABLE Polls ADD COLUMN duration INTEGER;"""
+    )
+
+    cursor.execute(
+        """ ALTER TABLE Polls ADD COLUMN startdate TEXT;"""
+    )
+
     connection.commit()
     connection.close()
     print("Database built!")

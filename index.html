@@ -418,9 +418,10 @@
             <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Polls</span>
 
           </div>
+          <div v-if="user_details" >
           <p class="w3-center">Community polls for guiding decisions making.</p>
           <p class="w3-center">Use your unique link/QRCode to login.</p>
-
+        </div>
 
           <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">
             {{ notification.message }}
@@ -479,12 +480,17 @@
                 <label for="pollTitle">Poll title:</label>
                 <br></br>
                 <input class="responsive-input" style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"
-                  v-model="newPoll.title">
+                  v-model="newPoll.title"></input>
                 <br></br>
-                <label for="choices">Choices: (separated by new lines)</label>
+                <label>Choices: (separated by new lines)</label>
                 <br></br>
                 <textarea class="responsive-input" id="choices" name="choices" rows="10" cols="50"
                   v-model="newPoll.choices"></textarea>
+                <br></br>
+                <label>Number of weeks yo run for </label>
+                <br></br>
+                <input class="responsive-input" style="min-width: 400px;" type="number" max="10" id="pollDuration" name="pollDuration"
+                  v-model="newPoll.duration"></input>
                 <br></br>
                 <button type="submit">Submit</button>
               </form>
@@ -543,7 +549,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div>    
 
       <!-- Grid -->
       <div class="w3-container full-screen-section">
@@ -615,7 +621,7 @@
 
               <div class="w3-container">
                 <h3>Andrew</h3>
-                <p class="w3-opacity">co-chair, tresurer</p>
+                <p class="w3-opacity">co-chair, treasurer</p>
               </div>
             </div>
           </div>
@@ -635,7 +641,7 @@
 
               <div class="w3-container">
                 <h3>Angi</h3>
-                <p class="w3-opacity">Secutrary</p>
+                <p class="w3-opacity">Secretary</p>
               </div>
             </div>
           </div>

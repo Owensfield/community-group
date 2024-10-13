@@ -297,6 +297,15 @@
     .greyed-out {
       color: grey;
     }
+
+    .no-bullets {
+      list-style-type: none;
+      /* Remove bullet marks */
+      padding: 0;
+      /* Remove default padding */
+      margin: 0;
+      /* Remove default margin */
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 </head>
@@ -339,7 +348,7 @@
     <!-- Slideshow -->
     <div class="w3-container full-screen-section">
       <div class="w3-display-container mySlides">
-        <img src="./images/1.jpg" style="width:100%">
+        <img src="./images/11.png" style="width:100%">
         <div class="w3-display-topleft w3-container w3-padding-32">
         </div>
       </div>
@@ -354,8 +363,38 @@
         </div>
       </div>
       <div class="w3-display-container mySlides">
-        <img src="./images/3.jpg" style="width:100%">
+        <img src="./images/3.png" style="width:100%">
         <div class="w3-display-topright w3-container w3-padding-32">
+        </div>
+      </div>
+      <div class="w3-display-container mySlides">
+        <img src="./images/5.png" style="width:100%">
+        <div class="w3-display-topleft w3-container w3-padding-32">
+        </div>
+      </div>
+      <div class="w3-display-container mySlides">
+        <img src="./images/7.png" style="width:100%">
+        <div class="w3-display-middle w3-container w3-padding-32">
+        </div>
+      </div>
+      <div class="w3-display-container mySlides">
+        <img src="./images/8.png" style="width:100%">
+        <div class="w3-display-topright w3-container w3-padding-32">
+        </div>
+      </div>
+      <div class="w3-display-container mySlides">
+        <img src="./images/9.png" style="width:100%">
+        <div class="w3-display-topleft w3-container w3-padding-32">
+        </div>
+      </div>
+      <div class="w3-display-container mySlides">
+        <img src="./images/10.png" style="width:100%">
+        <div class="w3-display-topright w3-container w3-padding-32">
+        </div>
+      </div>
+      <div class="w3-display-container mySlides">
+        <img src="./images/1.png" style="width:100%">
+        <div class="w3-display-middle w3-container w3-padding-32">
         </div>
       </div>
 
@@ -449,6 +488,8 @@
                 user*</button>
               <button v-if="user_details.roll == 2" class="tablinks"
                 @click="openTab($event, 'allUsers')">Users*</button>
+                <button v-if="user_details.roll == 2" class="tablinks"
+                @click="openTab($event, 'conditions')">Conditions*</button>
             </div>
 
             <div id="Active" class="tabcontent">
@@ -473,8 +514,7 @@
               <div class="polls-container">
                 <div v-for="(poll, pollIndex) in oldPolls" :key="pollIndex" class="poll">
                   <p v-html="convertLinks(poll.title)"></p>
-                  <label>{{ poll.choice }}</label>
-                  <ul>
+                  <ul class="no-bullets">
                     <li v-for="(choice, choiceIndex) in poll.choices" :key="choiceIndex"
                       :class="{ 'greyed-out': !choice.isTopChoice }">
                       {{ choice.name }} ({{ choice.votes }} votes)
@@ -546,6 +586,23 @@
                 <br></br>
                 <input class="responsive-input" style="min-width: 400px;" type="text" id="deleteUserId"
                   v-model="deleteUserData.user_id" name="user_id">
+                <br></br>
+                <button type="submit">Submit</button>
+              </form>
+            </div>
+
+            <div v-if="user_details.roll == 2" id="conditions" class="tabcontent">
+              <h3>Conditions</h3>
+              <form @submit.prevent="conditionsUpdate">
+                <label for="conditionsQuorum">Quorum:</label>
+                <br></br>
+                <input class="responsive-input" style="min-width: 400px;" type="text" id="conditionsQuorum"
+                  v-model="conditionsData.quorum" name="user_id">
+                <br></br>
+                <label for="conditionsThreshold">Threshold:</label>
+                <br></br>
+                <input class="responsive-input" style="min-width: 400px;" type="text" id="conditionsThreshold"
+                  v-model="conditionsData.threshold" name="user_id">
                 <br></br>
                 <button type="submit">Submit</button>
               </form>
@@ -697,7 +754,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <script>
-    const API_BASE_URL = "https://zero.wales";
+    const API_BASE_URL = "http://127.0.0.1:8000";
     new Vue({
       el: '#app',
       data: {
@@ -731,6 +788,10 @@
         qrCodeToShow: "",
         deleteUserData: {
           user_id: ''
+        },
+        conditionsData: {
+          quorum: 0,
+          threshold: 0
         },
         docs: [],
         selectedDoc: null,
@@ -812,6 +873,7 @@
             if (self.user_details.roll == 2) {
               this.getUsers(userId);
             }
+            this.getConditions();
           } catch (error) {
             this.showNotification('There was an error logging in, please try again with correct ID.');
             console.error('There has been a problem with your fetch operation:', error);
@@ -838,6 +900,51 @@
           } catch (error) {
             this.showNotification('There was an error fetching users, please try again.');
             console.error('There has been a problem with your fetch operation:', error);
+          }
+        },
+        async getConditions() {
+          self = this;
+          try {
+            const response = await fetch(`${API_BASE_URL}/conditions`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const data = await response.json();
+            console.log(data)
+            self.conditionsData = data;
+            // Process the data as needed
+          } catch (error) {
+            console.error('There has been a problem fetching conditions:', error);
+          }
+        },
+        async conditionsUpdate() {
+          self = this
+          this.conditionsData.user_id = this.user_details.id;
+          console.log(this.conditionsData);
+          try {
+            const response = await fetch(`${API_BASE_URL}/conditions`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(this.conditionsData)
+            });
+
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+            const data = await response.json();
+            self.conditionsData = data;
+            this.showSuccessNotification('Conditions updated.');
+          } catch (error) {
+            this.showNotification(error);
           }
         },
         convertLinks(text) {
@@ -1073,7 +1180,6 @@
               throw new Error('Network response was not ok ' + response.statusText);
             }
             const data = await response.json();
-            console.log(data)
             this.docs = data;
           } catch (error) {
             console.error('Error fetching docs:', error);

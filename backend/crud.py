@@ -4,6 +4,8 @@ from models import (
     PollData,
     CreatePollData,
     UserData,
+    Conditions,
+    UpdateConditions,
 )
 from typing import Optional
 from typing import List, Optional
@@ -12,6 +14,7 @@ import time
 from db import Database
 from http import HTTPStatus
 from fastapi import HTTPException
+from datetime import datetime, timedelta
 
 db = Database("ovs")
 ### Users
@@ -114,6 +117,15 @@ async def get_poll(poll_id: str)-> PollData:
 
 async def get_polls() -> List[PollData]:
     rows = await db.fetchall("SELECT * FROM Polls")
+    for row in rows:
+        if not row['complete'] and row['startdate'] and row['duration']:
+            startdate = datetime.strptime(row['startdate'], '%Y-%m-%d %H:%M:%S')
+            duration_weeks = row['duration']
+            enddate = startdate + timedelta(weeks=duration_weeks)
+            if datetime.now() > enddate:
+                # Duration has elapsed
+                await db.execute("UPDATE Polls SET complete = ? WHERE id = ?", 
+                     (True, row['id']))
     return [PollData(**row) for row in rows]
 
 async def delete_poll(poll_id: str) -> None:
@@ -138,12 +150,8 @@ async def update_poll(poll_id: str, user_id: str, opt_no: int) -> Optional[PollD
     else:
         raise ValueError("Invalid option number")
     updated_choices_json = json.dumps(choices)
-    total_votes = sum(choice[1] for choice in choices)
-    total_users = await get_users_count()
-    threshold = (total_users * 2) * 0.51  # 51% threshold
-    complete = total_votes > threshold
-    await db.execute("UPDATE Polls SET choices = ?, voters = ?, complete = ? WHERE id = ?", 
-                     (updated_choices_json, voters, complete, poll_id))
+    await db.execute("UPDATE Polls SET choices = ?, voters = ? WHERE id = ?", 
+                    (updated_choices_json, voters, poll_id))
     updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
     return PollData(**updated_row) if updated_row else None
 
@@ -157,10 +165,39 @@ async def update_poll_confirm(poll_id: str, user_id: str) -> Optional[PollData]:
         confirmers += f",{user_id}"
     else:
         confirmers = user_id
-    await db.execute("UPDATE Polls SET confirms = ?, confirmers = ? WHERE id = ?", (confirms, confirmers, poll_id))
+    startdate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    await db.execute(
+        "UPDATE Polls SET confirms = ?, confirmers = ?, startdate = ? WHERE id = ?",
+        (confirms, confirmers, startdate, poll_id)
+    )
     updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
     return PollData(**updated_row) if updated_row else None
 
 async def get_vote(poll_id: str, user_id: str) -> Optional[dict]:
     row = await db.fetchone("SELECT * FROM Votes WHERE poll_id = ? AND user_id = ?", (poll_id, user_id))
     return row if row else None
+
+# Conditions
+
+async def get_conditions()-> Conditions:
+    row = await db.fetchone("SELECT * FROM conditions WHERE id = ?", (1,))
+    conditions = Conditions(**row) if row else None
+    return conditions
+
+async def update_conditions(data: Conditions) -> Optional[UpdateConditions]:
+    await db.execute("UPDATE conditions SET quorum = ?, threshold = ? WHERE id = ?", 
+                     (data.quorum, data.threshold, 1))
+    rows = await db.fetchall("SELECT * FROM Polls")
+    for row in rows:
+        if row['startdate'] and row['duration']:
+            startdate = datetime.strptime(row['startdate'], '%Y-%m-%d %H:%M:%S')
+            duration_weeks = row['duration']
+            enddate = startdate + timedelta(weeks=duration_weeks)
+            if datetime.now() > enddate:
+                # Duration has elapsed
+                await db.execute("UPDATE Polls SET complete = ? WHERE id = ?", 
+                    (True, row['id']))
+            else:
+                await db.execute("UPDATE Polls SET complete = ? WHERE id = ?", 
+                    (False, row['id']))
+    return await get_conditions()

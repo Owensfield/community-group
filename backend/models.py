@@ -42,3 +42,12 @@ class CreateVote(BaseModel):
     user_id: Optional[str] = None
     opt_no: Optional[int] = 0
     confirm: Optional[bool] = False
+
+class UpdateConditions(BaseModel):
+    user_id: str
+    quorum: int
+    threshold: int
+
+class Conditions(BaseModel):
+    quorum: int
+    threshold: int

@@ -21,11 +21,14 @@ from crud import (
     update_poll,
     get_vote,
     update_poll_confirm,
+    get_conditions,
+    update_conditions,
 )
 from models import (
     CreateUserData,
     CreatePollData,
     CreateVote,
+    UpdateConditions,
 )
 
 ovs = FastAPI()
@@ -295,3 +298,36 @@ async def get_doc_content(filename: str, user_id: str):
         return decoded_content
     else:
         raise HTTPException(status_code=500, detail="Failed to fetch doc content")
+    
+# Conditions
+
+@ovs.get("/conditions")
+async def ovs_api_get_conditions():
+    conditions = await get_conditions()
+    if not conditions:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Conditions not found",
+        )
+    return conditions
+
+@ovs.put("/conditions")
+async def ovs_api_update_conditions(data: UpdateConditions):
+    user = await get_user(data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found",
+        )
+    if user.roll < 2:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an super admin",
+        )
+    conditions = await update_conditions(data)
+    if not conditions:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Conditions not found",
+        )
+    return conditions

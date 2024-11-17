@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from migrations import migrate
 from crud import (
     create_user,
+    update_user,
     get_user,
     get_users,
     delete_user,
@@ -26,22 +27,13 @@ from crud import (
 )
 from models import (
     CreateUserData,
+    UserData, 
     CreatePollData,
     CreateVote,
     UpdateConditions,
 )
 
 ovs = FastAPI()
-
-# Configuration
-GITHUB_API_BASE = "https://api.github.com"
-REPO_OWNER = "arcbtc"
-REPO_NAME = "Owensfield/docs"
-DOCS_PATH = "2024"
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-
-
-migrate()  # Call without 'await'
 
 origins = [
     "http://localhost",
@@ -59,6 +51,15 @@ ovs.add_middleware(
     allow_headers=["*"],
 )
 
+# Configuration
+GITHUB_API_BASE = "https://api.github.com"
+REPO_OWNER = "arcbtc"
+REPO_NAME = "Owensfield/docs"
+DOCS_PATH = "2024"
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+
+
+migrate()  # Call without 'await'
 
 @ovs.on_event("startup")
 async def startup_event():
@@ -80,6 +81,16 @@ async def ovs_api_create_user(data: CreateUserData):
         )
     return await create_user(data)
 
+
+@ovs.put("/user")
+async def ovs_api_update_user(data: UserData):
+    user = await get_user(data.admin_id)
+    if user.roll != 2:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an admin",
+        )
+    return await update_user(data)
 
 @ovs.get("/user")
 async def ovs_api_get_user(user_id: str):
@@ -103,8 +114,8 @@ async def ovs_api_get_users(user_id: str):
 
 @ovs.delete("/user")
 async def ovs_api_delete_user(user_id: str, admin_id: str):
+    print(user_id)
     user = await get_user(admin_id)
-    print(user)
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,

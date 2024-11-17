@@ -1,0 +1,305 @@
+#myDialog {
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+
+  .btnstyle {
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #closeDialog {
+    padding: 10px 20px;
+    background-color: #DC3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .full-screen-section {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html,
+  body,
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Lato", sans-serif
+  }
+
+  .mySlides {
+    display: none
+  }
+
+  .w3-tag,
+  .fa {
+    cursor: pointer
+  }
+
+  .w3-tag {
+    height: 15px;
+    width: 15px;
+    padding: 0;
+    margin-top: 6px
+  }
+
+  .container {
+    display: flex;
+    align-items: center;
+    padding-top: 45px;
+  }
+
+  .container img {
+    order: 1;
+    margin-right: 10px;
+    /* Optional: Add some space between the image and text */
+  }
+
+  .container p {
+    order: 2;
+  }
+
+  @media (max-width: 600px) {
+    .hide-on-mobile {
+      display: none;
+    }
+  }
+
+  /* Default font size */
+  .responsive-text {
+    font-size: 30px;
+    /* Adjust as needed */
+  }
+
+  /* Smaller font size for screens smaller than 600px */
+  @media (max-width: 600px) {
+    .responsive-text {
+      font-size: 20px;
+      /* Adjust as needed */
+    }
+  }
+
+  .tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+  }
+
+  /* Style the buttons inside the tab */
+  .tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+  }
+
+  /* Change background color of buttons on hover */
+  .tab button:hover {
+    background-color: #ddd;
+  }
+
+  /* Create an active/current tablink class */
+  .tab button.active {
+    background-color: #ccc;
+  }
+
+  /* Style the tab content */
+  .tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+  }
+
+  .polls-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    /* Adjust the gap between columns as needed */
+  }
+
+  @media (max-width: 768px) {
+    .polls-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .responsive-input {
+    min-width: 400px;
+  }
+
+  @media (max-width: 768px) {
+    .responsive-input {
+      min-width: 100%;
+    }
+  }
+
+  .poll {
+    border: 1px solid #ccc;
+    /* Optional: Add some styling to the poll items */
+    padding: 10px;
+    /* Optional: Add some padding */
+    background-color: #f9f9f9;
+    /* Optional: Add a background color */
+  }
+
+  input[type=text],
+  select {
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  textarea {
+    height: 150px;
+    padding: 12px 20px;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    resize: none;
+  }
+
+  input[type=submit] {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .success_notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #d7f8e8;
+    color: #1c7247;
+    padding: 10px 20px;
+    border: 1px solid #c6f5dc;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    /* Ensure it appears above other elements */
+  }
+
+  .notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px 20px;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    /* Ensure it appears above other elements */
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    background-color: #f3f3f3;
+    border-radius: 2px;
+    margin-top: 5px;
+  }
+
+  .progress-bar {
+    height: 5px;
+    background-color: #4caf50;
+    border-radius: 2px;
+    margin-bottom: 15px;
+  }
+
+  .tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px;
+    transition: 0.3s;
+    font-size: 16px;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+
+  .w3-input[disabled],
+  .w3-button[disabled] {
+    background-color: #f1f1f1;
+    color: #a0a0a0;
+    cursor: not-allowed;
+  }
+
+  .w3-container.full-screen-section {
+    margin-bottom: 20px;
+    /* Add space between sections */
+    padding: 10px;
+    /* Add padding within sections */
+    overflow: auto;
+    /* Ensure content does not overflow */
+    box-sizing: border-box;
+    /* Include padding and border in the element's total width and height */
+  }
+
+  /* Example of using flexbox for layout */
+  .container {
+    display: flex;
+    flex-direction: column;
+    /* Stack sections vertically */
+    gap: 20px;
+    /* Space between sections */
+  }
+
+  /* Example of using grid for layout */
+  .grid-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* Single column layout */
+    row-gap: 20px;
+    /* Space between rows */
+  }
+
+  .greyed-out {
+    color: grey;
+  }
+
+  .no-bullets {
+    list-style-type: none;
+    /* Remove bullet marks */
+    padding: 0;
+    /* Remove default padding */
+    margin: 0;
+    /* Remove default margin */
+  }
+
+  .left-section {
+    float: left;
+  }
+
+  .right-section {
+    float: right;
+    width: calc(100% - 220px);
+    /* Adjust width to account for the image width and some margin */
+  }

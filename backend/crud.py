@@ -54,6 +54,11 @@ async def get_user(user_id: str):
     else:
         raise HTTPException(status_code=404, detail="User not found")
 
+async def update_user(data: UserData) -> UserData:
+    await db.execute(
+        "UPDATE Users SET email = ?, roll = ? WHERE id = ?",
+        (data.email, data.roll, data.id)
+    )
 
 async def get_user_by_email(email: str) -> UserData:
     row = await db.fetchone("SELECT * FROM Users WHERE email = ?", (email,))
@@ -118,9 +123,11 @@ async def get_poll(poll_id: str)-> PollData:
 async def get_polls() -> List[PollData]:
     rows = await db.fetchall("SELECT * FROM Polls")
     for row in rows:
-        if not row['complete'] and row['startdate'] and row['duration']:
+        if not row['complete'] and row['startdate']:
             startdate = datetime.strptime(row['startdate'], '%Y-%m-%d %H:%M:%S')
             duration_weeks = row['duration']
+            if not duration_weeks:
+                duration_weeks = 1
             enddate = startdate + timedelta(weeks=duration_weeks)
             if datetime.now() > enddate:
                 # Duration has elapsed

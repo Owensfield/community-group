@@ -18,7 +18,7 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 FRONTEND_LINK = os.getenv("FRONTEND_LINK")
 
-SUPER_USER_EMAIL = os.getenv("SUPER_USER_EMAIL")
+SUPER_USER_EMAIL = str(os.getenv("SUPER_USER_EMAIL"))
 
 # Email sending function
 def send_email(to_emails: list, subject: str, body: str):

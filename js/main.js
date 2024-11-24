@@ -120,6 +120,38 @@ new Vue({
                 this.showNotification(error);
             }
         },
+        async showPollUpdateRunDialog(poll) {
+            this.showPollRunUpdateDialog = true;
+            this.updatePollRun = poll;
+        },
+        async pollRunUpdate(updateData) {
+            dataToSend = {
+                id: updateData.id,
+                admin_id: this.user_details.id,
+                duration: parseInt(updateData.duration),
+                complete: (updateData.complete == "true")
+            }
+            console.log(dataToSend)
+            try {
+                const response = await fetch(`${API_BASE_URL}/polls/run`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                this.getAllPolls(this.user_details.id);
+                this.showPollRunUpdateDialog = false
+                this.showSuccessNotification('Poll updated successfully.');
+                this.getAllPolls(userId);
+            } catch (error) {
+                this.showNotification(error);
+            }
+        },
         async updateUser() {
             self = this
             this.userDialogForm.admin_id = this.user_details.id;

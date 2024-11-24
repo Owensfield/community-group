@@ -205,6 +205,8 @@
                       <div class="progress-bar" :style="{ width: getVotePercentage(poll, choice) + '%' }"></div>
                     </div>
                   </div>
+                  <button v-if="user_details.roll == 2" @click="showPollUpdateRunDialog(poll)">
+                    Update run time</button>
                 </div>
               </div>
             </div>
@@ -220,6 +222,8 @@
                       {{ choice.name }} ({{ choice.votes }} votes)
                     </li>
                   </ul>
+                  <button v-if="user_details.roll == 2" @click="showPollUpdateRunDialog(poll)">
+                    Update run time</button>
                 </div>
               </div>
             </div>
@@ -327,19 +331,18 @@
             <div v-if="showPollRunUpdateDialog" class="w3-modal" style="display: block;">
               <div class="w3-modal-content w3-card-4">
                 <header class="w3-container w3-light-grey">
-                  <span @click="showUserUpdateDialog = false" class="w3-button w3-display-topright">&times;</span>
-                  <b>{{ userDialogForm.email }} - {{ userDialogForm.id }}</b>
+                  <span @click="showPollRunUpdateDialog = false" class="w3-button w3-display-topright">&times;</span>
                 </header>
                 <div class="w3-container" style="max-height: 70vh; overflow-y: auto;">
-                  <form @submit.prevent="updateUser">
+                  <form @submit.prevent="pollRunUpdate(updatePollRun)">
                     <br></br>
-                    <label for="email">Run time:</label>
+                    <label>Run time:</label>
                     <input class="responsive-input" style="min-width: 400px;" type="text" id="email"
-                      v-model="updatePollRun.email" name="email"></input>
+                      v-model="updatePollRun.duration" name="email"></input>
                     <br></br>
-                    <label for="email">Complete:</label>
+                    <label>Complete:</label>
                     <input class="responsive-input" style="min-width: 400px;" type="text" id="email"
-                      v-model="updatePollRun.email" name="email"></input>
+                      v-model="updatePollRun.complete" name="email"></input>
                     <br></br>
                     <button type="submit">Submit</button>
                     <br></br>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
@@ -18,7 +18,6 @@ class UpdateUserData(BaseModel):
     email: str
     admin_id: str
     roll: int
-
 
 class CreatePollData(BaseModel):
     id: Optional[str] = None
@@ -58,3 +57,8 @@ class UpdateConditions(BaseModel):
 class Conditions(BaseModel):
     quorum: int
     threshold: int
+
+class EmailRequest(BaseModel):
+    to_email: EmailStr
+    subject: str
+    body: str

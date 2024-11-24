@@ -4,6 +4,15 @@ import httpx
 import os
 import base64
 from time import time
+from helpers import (
+    send_email,
+    GITHUB_API_BASE,
+    EMAIL,
+    REPO_OWNER,
+    REPO_NAME,
+    DOCS_PATH,
+    GITHUB_TOKEN,
+)
 from typing import List
 from pydantic import BaseModel
 from http import HTTPStatus
@@ -33,6 +42,7 @@ from models import (
     CreatePollData,
     CreateVote,
     UpdateConditions,
+    EmailRequest
 )
 
 ovs = FastAPI()
@@ -52,14 +62,6 @@ ovs.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configuration
-GITHUB_API_BASE = "https://api.github.com"
-REPO_OWNER = "arcbtc"
-REPO_NAME = "Owensfield/docs"
-DOCS_PATH = "2024"
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-
 
 migrate()  # Call without 'await'
 
@@ -349,3 +351,28 @@ async def ovs_api_update_conditions(data: UpdateConditions):
             detail="Conditions not found",
         )
     return conditions
+
+
+@ovs.post("/form-email")
+async def send_email_endpoint(email_request: EmailRequest):
+    try:
+        send_email(
+            to_email=EMAIL,
+            subject="Website form submission",
+            body=email_request.body
+        )
+        return {"message": "Email sent successfully!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")
+
+@ovs.post("/doc-email")
+async def send_email_endpoint(email_request: EmailRequest):
+    try:
+        send_email(
+            to_email=email_request.to_email,
+            subject=email_request.subject,
+            body=email_request.body
+        )
+        return {"message": "Email sent successfully!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")

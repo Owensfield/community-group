@@ -12,6 +12,9 @@ from helpers import (
     REPO_NAME,
     DOCS_PATH,
     GITHUB_TOKEN,
+    FRONTEND_LINK,
+    SUPER_USER_EMAIL,
+    CONTACT_FORM_EMAIL
 )
 from typing import List
 from pydantic import BaseModel
@@ -34,6 +37,7 @@ from crud import (
     update_poll_confirm,
     get_conditions,
     update_conditions,
+    update_poll_run_time
 )
 from models import (
     CreateUserData,
@@ -42,13 +46,15 @@ from models import (
     CreatePollData,
     CreateVote,
     UpdateConditions,
-    EmailRequest
+    EmailRequest,
+    UpdatePollRun,
+    ContactForm
 )
 
 ovs = FastAPI()
 
 origins = [
-    "https://owensfield.wales",
+    FRONTEND_LINK,
 ]
 
 ovs.add_middleware(
@@ -63,7 +69,7 @@ migrate()  # Call without 'await'
 
 @ovs.on_event("startup")
 async def startup_event():
-    user_data = CreateUserData(admin_id="admin", email="benh@lnbits.com", roll=2)
+    user_data = CreateUserData(admin_id="admin", email=SUPER_USER_EMAIL, roll=2)
     try:
         user = await create_user(user_data)
         print("User created successfully: ", user)
@@ -235,6 +241,16 @@ async def update_poll_vote(data: CreateVote):
             detail=str(e),
         )
 
+@ovs.put("/polls/run")
+async def ovs_api_update_poll(data: UpdatePollRun):
+    user = await get_user(data.admin_id)
+    if user.roll != 2:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an admin",
+        )
+    
+    return await update_poll_run_time(data.id, data.duration, data.complete)
 
 @ovs.get("/polls")
 async def ovs_api_get_polls(user_id: str):
@@ -349,25 +365,13 @@ async def ovs_api_update_conditions(data: UpdateConditions):
     return conditions
 
 
-@ovs.post("/form-email")
-async def send_email_endpoint(email_request: EmailRequest):
+@ovs.post("/contactform")
+async def send_email_endpoint(email_request: ContactForm):
     try:
         send_email(
-            to_email=EMAIL,
-            subject="Website form submission",
-            body=email_request.body
-        )
-        return {"message": "Email sent successfully!"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")
-
-@ovs.post("/doc-email")
-async def send_email_endpoint(email_request: EmailRequest):
-    try:
-        send_email(
-            to_email=email_request.to_email,
-            subject=email_request.subject,
-            body=email_request.body
+            to_emails=[CONTACT_FORM_EMAIL],
+            subject="Contact form: " + email_request.subject,
+            body=email_request.name + " " + email_request.email + "\n\n" + email_request.message
         )
         return {"message": "Email sent successfully!"}
     except Exception as e:

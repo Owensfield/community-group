@@ -1,4 +1,5 @@
 const API_BASE_URL = "https://zero.wales";
+console.log(API_BASE_URL);
 new Vue({
     el: '#app',
     data: {
@@ -9,10 +10,23 @@ new Vue({
         pollsInReview: [],
         oldPolls: [],
         suggestPolls: [],
+        contactForm: {
+            name: "",
+            email: "",
+            subject: "",
+            message: "",
+        },
+        errors: {},
+        captcha: {
+            number1: Math.floor(Math.random() * 10), // First random number
+            number2: Math.floor(Math.random() * 10), // Second random number
+            answer: null, // User-provided answer
+        },
         showModal: false,
         showUserCreateDialog: false,
         showUserUpdateDialog: false,
         showUserDeleteDialog: false,
+        showPollRunUpdateDialog: false,
         userDialogForm: {
             id: "",
             email: "",
@@ -129,13 +143,13 @@ new Vue({
                 this.showNotification(error);
             }
         },
-        async openUpdateUserDialog(updateData){
+        async openUpdateUserDialog(updateData) {
             this.showUserUpdateDialog = true;
             this.userDialogForm.id = updateData.id;
             this.userDialogForm.email = updateData.email;
             this.userDialogForm.roll = updateData.roll;
         },
-        async openDeleteUserDialog(deleteData){
+        async openDeleteUserDialog(deleteData) {
             this.showUserDeleteDialog = true;
             this.deleteUserDialogForm.id = deleteData.id;
             this.deleteUserDialogForm.email = deleteData.email;
@@ -323,6 +337,76 @@ new Vue({
                 this.showSuccessNotification('User created successfully.');
                 this.showUserCreateDialog = false
                 this.getUsers();
+            } catch (error) {
+                this.showNotification('There was an error creating the user, please try again.');
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        },
+        validateForm() {
+            this.errors = {}; // Clear previous errors
+            let isValid = true;
+
+            // Validate Name
+            if (!this.contactForm.name) {
+                this.errors.name = "Name is required.";
+                isValid = false;
+            }
+
+            // Validate Email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!this.contactForm.email) {
+                this.errors.email = "Email is required.";
+                isValid = false;
+            } else if (!emailRegex.test(this.contactForm.email)) {
+                this.errors.email = "Please enter a valid email address.";
+                isValid = false;
+            }
+
+            // Validate Subject
+            if (!this.contactForm.subject) {
+                this.errors.subject = "Subject is required.";
+                isValid = false;
+            }
+
+            // Validate Message
+            if (!this.contactForm.message) {
+                this.errors.message = "Message is required.";
+                isValid = false;
+            }
+
+            // Validate Captcha
+            const correctAnswer = this.captcha.number1 + this.captcha.number2;
+            if (this.captcha.answer === null || this.captcha.answer !== correctAnswer) {
+                this.errors.captcha = "Incorrect answer to the equation.";
+                isValid = false;
+            }
+
+            return isValid;
+        },
+        async sendContactForm() {
+            if (!this.validateForm()) {
+                throw new Error('Something is wrong with the form');
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/contactform`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.contactForm)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                this.contactForm = {
+                    name: "",
+                    email: "",
+                    subject: "",
+                    message: "",
+                };
+                this.captcha.answer = null
+                this.showSuccessNotification('Email sent. Thank you.');
             } catch (error) {
                 this.showNotification('There was an error creating the user, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);

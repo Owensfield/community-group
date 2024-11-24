@@ -11,6 +11,7 @@ from typing import Optional
 from typing import List, Optional
 import shortuuid
 import time
+from helpers import get_all_emails, send_email
 from db import Database
 from http import HTTPStatus
 from fastapi import HTTPException
@@ -179,11 +180,25 @@ async def update_poll_confirm(poll_id: str, user_id: str) -> Optional[PollData]:
         (confirms, confirmers, startdate, poll_id)
     )
     updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    if updated_row['confirms'] >= 4: # Send an email to all users on poll creation
+        emails = get_all_emails(await get_users())
+        send_email(emails, "New poll", "A new poll has been created: " + updated_row['title'] + "\n\n Please visit the website to vote")
     return PollData(**updated_row) if updated_row else None
 
 async def get_vote(poll_id: str, user_id: str) -> Optional[dict]:
     row = await db.fetchone("SELECT * FROM Votes WHERE poll_id = ? AND user_id = ?", (poll_id, user_id))
     return row if row else None
+
+async def update_poll_run_time(poll_id: str, duration: int, complete: bool) -> Optional[PollData]:
+    row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    if not row:
+        return None
+    await db.execute(
+        "UPDATE Polls SET duration = ?, complete = ? WHERE id = ?",
+        (duration, complete, poll_id)
+    )
+    updated_row = await db.fetchone("SELECT * FROM Polls WHERE id = ?", (poll_id,))
+    return PollData(**updated_row) if updated_row else None
 
 # Conditions
 

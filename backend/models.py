@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class CreateUserData(BaseModel):
@@ -43,6 +43,12 @@ class PollData(BaseModel):
     complete: Optional[bool] = None
     timestamp: Optional[str] = None
 
+class UpdatePollRun(BaseModel):
+    id: Optional[str] = None
+    duration: Optional[int] = 0
+    complete: Optional[bool] = None
+    admin_id: Optional[str] = None
+
 class CreateVote(BaseModel):
     poll_id: Optional[str] = None
     user_id: Optional[str] = None
@@ -59,6 +65,12 @@ class Conditions(BaseModel):
     threshold: int
 
 class EmailRequest(BaseModel):
-    to_email: EmailStr
+    to_emails: List[EmailStr]
     subject: str
     body: str
+
+class ContactForm(BaseModel):
+    name: str
+    email: EmailStr
+    subject: str
+    message: str

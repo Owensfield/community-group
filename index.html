@@ -267,7 +267,8 @@
               <button @click="showUserCreateDialog = true">Create a user</button>
               <div v-for="user in users" :key="user.id">
                 <p>ID: {{ user.id }}, EMAIL: {{ user.email }}, ROLL: {{ user.roll }}
-                  <button style="margin-right: 10px;" @click="openDeleteUserDialog({id:user.id,email:user.email})">x</button><button
+                  <button style="margin-right: 10px;"
+                    @click="openDeleteUserDialog({id:user.id,email:user.email})">x</button><button
                     @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">edit</button>
                 </p>
               </div>
@@ -321,6 +322,32 @@
                 </div>
               </div>
             </div>
+
+            <!-- Suoeruser edit poll run time -->
+            <div v-if="showPollRunUpdateDialog" class="w3-modal" style="display: block;">
+              <div class="w3-modal-content w3-card-4">
+                <header class="w3-container w3-light-grey">
+                  <span @click="showUserUpdateDialog = false" class="w3-button w3-display-topright">&times;</span>
+                  <b>{{ userDialogForm.email }} - {{ userDialogForm.id }}</b>
+                </header>
+                <div class="w3-container" style="max-height: 70vh; overflow-y: auto;">
+                  <form @submit.prevent="updateUser">
+                    <br></br>
+                    <label for="email">Run time:</label>
+                    <input class="responsive-input" style="min-width: 400px;" type="text" id="email"
+                      v-model="updatePollRun.email" name="email"></input>
+                    <br></br>
+                    <label for="email">Complete:</label>
+                    <input class="responsive-input" style="min-width: 400px;" type="text" id="email"
+                      v-model="updatePollRun.email" name="email"></input>
+                    <br></br>
+                    <button type="submit">Submit</button>
+                    <br></br>
+                  </form>
+                </div>
+              </div>
+            </div>
+
 
             <!-- Delete user dialog -->
             <div v-if="showUserDeleteDialog" class="w3-modal" style="display: block;">
@@ -384,29 +411,51 @@
           <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Contact the steering group</span>
         </div>
 
-        <form class="w3-container" action="/action_page.php" target="_blank">
+        <form @submit.prevent="sendContactForm" class="w3-container">
+          <!-- Name Input -->
           <div class="w3-section">
-            <label>Name</label>
-            <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Name" required
-              disabled title="This form is currently disabled.">
+            <label for="name">Name</label>
+            <input v-model="contactForm.name" id="name" class="w3-input w3-border w3-hover-border-black" type="text"
+              placeholder="Enter your name" required />
+            <span v-if="errors.name" class="w3-text-red">{{ errors.name }}</span>
           </div>
+
+          <!-- Email Input -->
           <div class="w3-section">
-            <label>Email</label>
-            <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" type="text" name="Email"
-              required disabled title="This form is currently disabled.">
+            <label for="email">Email</label>
+            <input v-model="contactForm.email" id="email" class="w3-input w3-border w3-hover-border-black" type="email"
+              placeholder="Enter your email" required />
+            <span v-if="errors.email" class="w3-text-red">{{ errors.email }}</span>
           </div>
+
+          <!-- Subject Input -->
           <div class="w3-section">
-            <label>Subject</label>
-            <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Subject" required disabled
-              title="This form is currently disabled.">
+            <label for="subject">Subject</label>
+            <input v-model="contactForm.subject" id="subject" class="w3-input w3-border w3-hover-border-black"
+              type="text" placeholder="Enter the subject" required />
+            <span v-if="errors.subject" class="w3-text-red">{{ errors.subject }}</span>
           </div>
+
+          <!-- Message Input -->
           <div class="w3-section">
-            <label>Message</label>
-            <input class="w3-input w3-border w3-hover-border-black" style="width:100%;" name="Message" required disabled
-              title="This form is currently disabled.">
+            <label for="message">Message</label>
+            <textarea v-model="contactForm.message" id="message" class="w3-input w3-border w3-hover-border-black"
+              placeholder="Write your message here" rows="4" required></textarea>
+            <span v-if="errors.message" class="w3-text-red">{{ errors.message }}</span>
           </div>
-          <button type="submit" class="w3-button w3-block w3-black" disabled
-            title="This form is currently disabled.">Send</button>
+          <!-- Equation Captcha -->
+          <div class="w3-section">
+            <label>Solve the equation:</label>
+            <p>
+              <strong>{{ captcha.number1 }} + {{ captcha.number2 }} = ?</strong>
+            </p>
+            <input v-model.number="captcha.answer" class="w3-input w3-border w3-hover-border-black" type="number"
+              placeholder="Your answer" required />
+            <span v-if="errors.captcha" class="w3-text-red">{{ errors.captcha }}</span>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="w3-button w3-block w3-black">Send</button>
         </form>
         <div class="w3-container">
         </div>

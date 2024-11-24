@@ -59,6 +59,7 @@ async def update_user(data: UserData) -> UserData:
         "UPDATE Users SET email = ?, roll = ? WHERE id = ?",
         (data.email, data.roll, data.id)
     )
+    return await get_user(data.id)
 
 async def get_user_by_email(email: str) -> UserData:
     row = await db.fetchone("SELECT * FROM Users WHERE email = ?", (email,))

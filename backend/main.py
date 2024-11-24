@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 import httpx
 import os
 import base64
+from time import time
 from typing import List
 from pydantic import BaseModel
 from http import HTTPStatus
@@ -27,7 +28,8 @@ from crud import (
 )
 from models import (
     CreateUserData,
-    UserData, 
+    UserData,
+    UpdateUserData,
     CreatePollData,
     CreateVote,
     UpdateConditions,
@@ -83,19 +85,24 @@ async def ovs_api_create_user(data: CreateUserData):
 
 
 @ovs.put("/user")
-async def ovs_api_update_user(data: UserData):
+async def ovs_api_update_user(data: UpdateUserData):
     user = await get_user(data.admin_id)
     if user.roll != 2:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Not an admin",
         )
-    return await update_user(data)
+    to_update = UserData(
+        id=data.id,
+        email=data.email,
+        roll=data.roll
+    )
+    
+    return await update_user(to_update)
 
 @ovs.get("/user")
 async def ovs_api_get_user(user_id: str):
     user = await get_user(user_id)
-    print(user)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://zero.wales";
+const API_BASE_URL = "http://0.0.0.0:8000";
 new Vue({
     el: '#app',
     data: {
@@ -108,7 +108,7 @@ new Vue({
         },
         async updateUser() {
             self = this
-            console.log(this.userDialogForm);
+            this.userDialogForm.admin_id = this.user_details.id;
             try {
                 const response = await fetch(`${API_BASE_URL}/user`, {
                     method: 'PUT',
@@ -121,10 +121,10 @@ new Vue({
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                const data = await response.json();
-                self.userDialogForm = data;
+                this.getUsers();
                 this.showSuccessNotification('User updated.');
-                this.showUserUpdateDialog = true;
+                this.showUserUpdateDialog = false;
+
             } catch (error) {
                 this.showNotification(error);
             }

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 class CreateUserData(BaseModel):
     admin_id: str
@@ -10,7 +11,13 @@ class UserData(BaseModel):
     id: str
     email: str
     roll: int
-    timestamp: Optional[str]
+    timestamp: Optional[str] = str(datetime.now())
+
+class UpdateUserData(BaseModel):
+    id: str
+    email: str
+    admin_id: str
+    roll: int
 
 
 class CreatePollData(BaseModel):

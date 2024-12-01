@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://zero.wales";
+const API_BASE_URL = "http://127.0.0.1:8000";
 console.log(API_BASE_URL);
 new Vue({
     el: '#app',
@@ -74,7 +74,7 @@ new Vue({
         }
     },
     methods: {
-        async resendLink(resendLinkEmail){
+        async resendLink(resendLinkEmail) {
             try {
                 const response = await fetch(`${API_BASE_URL}/resend?email=` + resendLinkEmail, {
                     method: 'get',
@@ -587,40 +587,48 @@ new Vue({
             }
         },
         async fetchDocs(userId) {
-            self = this;
             try {
                 const response = await fetch(`${API_BASE_URL}/api/docs?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                    },
                 });
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 const data = await response.json();
-                this.docs = data;
+                this.docs = data.map(doc => ({
+                    ...doc,
+                    type: doc.name.endsWith('.pdf') ? 'pdf' : 'markdown',
+                }));
             } catch (error) {
                 console.error('Error fetching docs:', error);
             }
         },
         async handleDocClick(doc) {
-            self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/api/docs/${doc.name}?user_id=${self.user_details.id}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
+                if (doc.type === 'pdf') {
+                    this.selectedDoc = {
+                        name: doc.name,
+                        content: `${API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`,
+                        type: 'pdf',
+                    };
+                } else if (doc.type === 'markdown') {
+                    const response = await fetch(`${API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch content');
                     }
-                });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
+                    const content = await response.text();
+                    this.selectedDoc = {
+                        name: doc.name,
+                        content,
+                        type: 'markdown',
+                    };
                 }
-                const content = await response.text();
-                this.selectedDoc = { name: doc.name, content };
                 this.showDialog = true;
             } catch (error) {
-                console.error('Error fetching doc content:', error);
+                console.error('Error handling document click:', error);
             }
         }
     },

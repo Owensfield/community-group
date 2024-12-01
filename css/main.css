@@ -303,3 +303,9 @@
     width: calc(100% - 220px);
     /* Adjust width to account for the image width and some margin */
   }
+
+  @media (min-height: 800px) {
+    .w3-modal-content {
+        height: 95%;
+    }
+}

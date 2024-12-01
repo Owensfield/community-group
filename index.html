@@ -139,19 +139,31 @@
               <li v-for="doc in docs" :key="doc.name" class="w3-hover-light-grey" style="cursor: pointer;"
                 @click="handleDocClick(doc)">
                 {{ doc.name }}
+                <span v-if="doc.type === 'pdf'" class="text-sm text-gray-500">(PDF)</span>
+                <span v-if="doc.type === 'markdown'" class="text-sm text-gray-500">(Markdown)</span>
               </li>
             </ul>
           </div>
 
           <!-- Dialog for displaying document content -->
           <div v-if="showDialog" class="w3-modal" style="display: block;">
-            <div class="w3-modal-content w3-card-4">
-              <header class="w3-container w3-light-grey">
-                <span @click="showDialog = false" class="w3-button w3-display-topright">&times;</span>
+            <div class="w3-modal-content w3-card-4"
+              style="width: 90%; height: 90%; max-width: 850px; max-height: 100%; overflow: hidden;">
+              <header class="w3-container w3-light-grey"
+                style="display: flex; justify-content: space-between; align-items: center;">
                 <b>{{ selectedDoc.name }}</b>
+                <span @click="showDialog = false" class="w3-button w3-display-topright">&times;</span>
               </header>
-              <div class="w3-container" style="max-height: 70vh; overflow-y: auto;">
-                <div v-html="parsedContent"></div>
+              <div class="w3-container" style="height: calc(100% - 50px); padding: 0;">
+                <div style="height: 100%; border: none;" v-if="selectedDoc.type === 'pdf'">
+                  <!-- Render the PDF in a clean iframe -->
+                  <iframe :src="`${selectedDoc.content}#toolbar=0&navpanes=0&scrollbar=0`"
+                    style="width: 100%; height: 100%; border: none;" frameborder="0">
+                  </iframe>
+                </div>
+                <div v-else v-html="parsedContent"
+                  style="height: 100%; overflow-y: auto; padding: 10px; box-sizing: border-box;">
+                </div>
               </div>
             </div>
           </div>
@@ -194,8 +206,7 @@
               <button class="tablinks" @click="openTab($event, 'Suggest')">Suggest a poll</button>
               <button v-if="user_details.roll > 0" class="tablinks" @click="openTab($event, 'Review')">Polls in
                 review*</button>
-              <button v-if="user_details.roll > 0" class="tablinks"
-                @click="openTab($event, 'allUsers')">Users*</button>
+              <button v-if="user_details.roll > 0" class="tablinks" @click="openTab($event, 'allUsers')">Users*</button>
               <button v-if="user_details.roll == 2" class="tablinks"
                 @click="openTab($event, 'conditions')">Conditions*</button>
             </div>
@@ -279,11 +290,10 @@
               <button @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create a user</button>
               <div v-for="user in users" :key="user.id">
                 <p>ID: {{ user.id }}, EMAIL: {{ user.email }}, ROLL: {{ user.roll }}
-                  <button style="margin-right: 10px;"
-                    @click="openDeleteUserDialog({id:user.id,email:user.email})" v-if="user_details.roll == 2">x</button><button
+                  <button style="margin-right: 10px;" @click="openDeleteUserDialog({id:user.id,email:user.email})"
+                    v-if="user_details.roll == 2">x</button><button
                     @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">edit</button>
-                    <button
-                    @click="resendLink(user.email)">Resend link to email</button>
+                  <button @click="resendLink(user.email)">Resend link to email</button>
                 </p>
               </div>
             </div>

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import PlainTextResponse
+import io
+from fastapi.responses import PlainTextResponse, StreamingResponse
 import httpx
 import base64
 from time import time
@@ -317,16 +318,19 @@ async def get_docs(user_id: str):
         response = await client.get(url, headers=headers)
     if response.status_code == 200:
         files = [
-            DocFile(name=file["name"], path=file["path"])
+            DocFile(
+                name=file["name"],
+                path=file["download_url"] if "download_url" in file else file["path"],
+            )
             for file in response.json()
-            if file["name"].endswith(".md")
+            if file["name"].endswith((".md", ".pdf"))
         ]
         return files
     else:
         raise HTTPException(status_code=500, detail="Failed to fetch docs")
 
 
-@ovs.get("/api/docs/{filename}", response_class=PlainTextResponse)
+@ovs.get("/api/docs/{filename}", response_class=StreamingResponse)
 async def get_doc_content(filename: str, user_id: str):
     user = await get_user(user_id)
     if not user:
@@ -341,11 +345,16 @@ async def get_doc_content(filename: str, user_id: str):
     }
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
-
     if response.status_code == 200:
         content = response.json()["content"]
-        decoded_content = base64.b64decode(content).decode("utf-8")
-        return decoded_content
+        if filename.endswith(".pdf"):
+            # Decode the base64 content and return it as a streaming response
+            pdf_bytes = base64.b64decode(content)
+            return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf")
+        else:
+            # Return Markdown content as plain text
+            decoded_content = base64.b64decode(content).decode("utf-8")
+            return PlainTextResponse(decoded_content)
     else:
         raise HTTPException(status_code=500, detail="Failed to fetch doc content")
     

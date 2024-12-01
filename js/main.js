@@ -224,7 +224,7 @@ new Vue({
                 self.user_details = data;
                 this.getAllPolls(userId);
                 this.openTab(null, 'Active');
-                if (self.user_details.roll == 2) {
+                if (self.user_details.roll > 0) {
                     this.getUsers(userId);
                 }
                 this.getConditions();

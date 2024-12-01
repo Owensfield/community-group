@@ -194,7 +194,7 @@
               <button class="tablinks" @click="openTab($event, 'Suggest')">Suggest a poll</button>
               <button v-if="user_details.roll > 0" class="tablinks" @click="openTab($event, 'Review')">Polls in
                 review*</button>
-              <button v-if="user_details.roll == 2" class="tablinks"
+              <button v-if="user_details.roll > 0" class="tablinks"
                 @click="openTab($event, 'allUsers')">Users*</button>
               <button v-if="user_details.roll == 2" class="tablinks"
                 @click="openTab($event, 'conditions')">Conditions*</button>
@@ -274,13 +274,13 @@
               </div>
             </div>
 
-            <div v-if="user_details.roll == 2" id="allUsers" class="tabcontent">
+            <div v-if="user_details.roll > 0" id="allUsers" class="tabcontent">
               <h3>Users</h3>
-              <button @click="showUserCreateDialog = true">Create a user</button>
+              <button @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create a user</button>
               <div v-for="user in users" :key="user.id">
                 <p>ID: {{ user.id }}, EMAIL: {{ user.email }}, ROLL: {{ user.roll }}
                   <button style="margin-right: 10px;"
-                    @click="openDeleteUserDialog({id:user.id,email:user.email})">x</button><button
+                    @click="openDeleteUserDialog({id:user.id,email:user.email})" v-if="user_details.roll == 2">x</button><button
                     @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">edit</button>
                     <button
                     @click="resendLink(user.email)">Resend link to email</button>

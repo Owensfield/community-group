@@ -97,7 +97,7 @@ async def ovs_api_create_user(data: CreateUserData):
 @ovs.put("/user")
 async def ovs_api_update_user(data: UpdateUserData):
     user = await get_user(data.admin_id)
-    if user.roll != 2:
+    if user.roll < 1:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Not an admin",
@@ -121,7 +121,7 @@ async def ovs_api_get_user(user_id: str):
 @ovs.get("/users")
 async def ovs_api_get_users(user_id: str):
     user = await get_user(user_id)
-    if not user or user.roll != 2:
+    if not user or user.roll < 1:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Not an admin",

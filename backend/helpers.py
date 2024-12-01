@@ -1,8 +1,10 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from models import UserData
 import os
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request
 
 load_dotenv()
 
@@ -51,3 +53,6 @@ def send_email(to_emails: list, subject: str, body: str):
 def get_all_emails(users):
     emails = [user.email for user in users]
     return emails
+
+async def resend_link_email(data: UserData):
+    return send_email([data.email], "User Link Owensfield Community Group", "Here is your link: https://owensfield.wales?id=" + data.id)

@@ -168,6 +168,14 @@
           <div v-if="!showTabs">
             <p class="w3-center">Community polls for guiding decisions making.</p>
             <p class="w3-center">Use your unique link/QRCode to login.</p>
+            <p class="w3-center">If you have forgotten you link enter email and click submit.</p>
+            <center>
+              <form @submit.prevent="resendLink">
+                <input class="responsive-input" style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"
+                  v-model="resendLinkEmail"></input>
+                <button type="submit">Submit</button>
+              </form>
+            </center>
           </div>
 
           <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">

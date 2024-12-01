@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 import httpx
 import base64
 from time import time
 from helpers import (
     send_email,
+    resend_link_email,
     GITHUB_API_BASE,
     EMAIL,
     REPO_OWNER,
@@ -36,7 +37,8 @@ from crud import (
     update_poll_confirm,
     get_conditions,
     update_conditions,
-    update_poll_run_time
+    update_poll_run_time,
+    get_user_by_email
 )
 from models import (
     CreateUserData,
@@ -148,6 +150,18 @@ async def ovs_api_delete_user(user_id: str, admin_id: str):
             detail="No user found",
         )
     return await delete_user(user_id)
+
+### Resend Email
+
+@ovs.get("/resend")
+async def ovs_api_resend_email(email: str):
+    user = await get_user_by_email(email)
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="No user found with that email",
+        )
+    return await resend_link_email(user)
 
 
 ### Polls

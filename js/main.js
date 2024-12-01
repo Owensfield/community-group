@@ -63,6 +63,7 @@ new Vue({
             quorum: 0,
             threshold: 0
         },
+        resendLinkEmail: "",
         docs: [],
         selectedDoc: null,
         showDialog: false,
@@ -73,6 +74,23 @@ new Vue({
         }
     },
     methods: {
+        async resendLink(){
+            try {
+                const response = await fetch(`${API_BASE_URL}/resend?email=` + this.resendLinkEmail, {
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                this.showSuccessNotification('Email sent, check your inbox.');
+            } catch (error) {
+                this.showNotification(error);
+            }
+        },
         openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");

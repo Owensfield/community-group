@@ -14,10 +14,11 @@ import time
 from helpers import get_all_emails, send_email
 from db import Database
 from http import HTTPStatus
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from datetime import datetime, timedelta
 
 db = Database("ovs")
+
 ### Users
 
 

@@ -170,7 +170,7 @@
             <p class="w3-center">Use your unique link/QRCode to login.</p>
             <p class="w3-center">If you have forgotten you link enter email and click submit.</p>
             <center>
-              <form @submit.prevent="resendLink">
+              <form @submit.prevent="resendLink(resendLinkEmail)">
                 <input class="responsive-input" style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"
                   v-model="resendLinkEmail"></input>
                 <button type="submit">Submit</button>
@@ -282,6 +282,8 @@
                   <button style="margin-right: 10px;"
                     @click="openDeleteUserDialog({id:user.id,email:user.email})">x</button><button
                     @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">edit</button>
+                    <button
+                    @click="resendLink(user.email)">Resend link to email</button>
                 </p>
               </div>
             </div>

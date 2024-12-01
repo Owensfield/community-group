@@ -63,8 +63,8 @@ new Vue({
             quorum: 0,
             threshold: 0
         },
-        resendLinkEmail: "",
         docs: [],
+        resendLinkEmail: "",
         selectedDoc: null,
         showDialog: false,
     },
@@ -74,9 +74,9 @@ new Vue({
         }
     },
     methods: {
-        async resendLink(){
+        async resendLink(resendLinkEmail){
             try {
-                const response = await fetch(`${API_BASE_URL}/resend?email=` + this.resendLinkEmail, {
+                const response = await fetch(`${API_BASE_URL}/resend?email=` + resendLinkEmail, {
                     method: 'get',
                     headers: {
                         'Content-Type': 'application/json'

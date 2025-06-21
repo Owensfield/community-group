@@ -105,41 +105,51 @@ p {
 }
 
 /* TABS */
+/* TABS */
 .tab {
-  overflow: hidden;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-}
-
-.tab button {
-  float: left;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 12px 16px;
-  font-size: 16px;
-  background-color: inherit;
-  transition: background 0.3s;
-}
-
-.tab button:hover {
-  background-color: #eee;
-}
-
-.tab button.active {
-  background-color: #f06292;
-  color: #fff;
-}
-
-.tabcontent {
-  display: none;
-  padding: 16px;
-  border: 1px solid #ccc;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  background: #fff;
-}
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid #eee;
+    background-color: #f9f9f9;
+    margin-bottom: 0;
+  }
+  
+  .tab button {
+    border: none;
+    background: #f0f0f0;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0;
+    border-right: 1px solid #ddd;
+    transition: background 0.2s, color 0.2s;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  
+  .tab button:last-child {
+    border-right: none;
+  }
+  
+  .tab button:hover {
+    background-color: #eee;
+  }
+  
+  .tab button.active {
+    background-color: #f06292;
+    color: white;
+  }
+  
+  .tabcontent {
+    display: none;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    background: #fff;
+  }
+  
 
 /* POLLS GRID */
 .polls-container {

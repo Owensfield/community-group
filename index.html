@@ -242,7 +242,7 @@
               <form @submit.prevent="submitPoll">
                 <label for="pollTitle">Poll title:</label>
                 <br></br>
-                <input class="responsive-input" style="min-width: 400px;" type="text" id="pollTitle" name="pollTitle"
+                <input class="responsive-input" type="text" id="pollTitle" name="pollTitle"
                   v-model="newPoll.title"></input>
                 <br></br>
                 <label>Choices: (separated by new lines)</label>
@@ -252,7 +252,7 @@
                 <br></br>
                 <label>Number of weeks to run for </label>
                 <br></br>
-                <input class="responsive-input" style="min-width: 400px;" type="number" max="10" id="pollDuration"
+                <input class="responsive-input" type="number" max="10" id="pollDuration"
                   name="pollDuration" v-model="newPoll.duration"></input>
                 <br></br>
                 <button type="submit">Submit</button>

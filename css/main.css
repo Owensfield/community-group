@@ -299,8 +299,8 @@
   }
 
   .right-section {
-    float: right;
-    width: calc(100% - 220px);
+    margin: 0 auto;
+    width: calc(80% - 220px);
     /* Adjust width to account for the image width and some margin */
   }
 
@@ -308,4 +308,23 @@
     .w3-modal-content {
         height: 95%;
     }
+}
+.hero-section {
+  display: block; /* no flex needed */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.hero-logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 20px auto; /* center image */
+}
+.hero-text {
+  max-width: 600px; /* controls line length */
+  margin: 0 auto;   /* center it under the image */
+  padding: 20px;
+  text-align: left; /* optional, if you want left-aligned text */
 }

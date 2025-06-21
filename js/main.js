@@ -219,9 +219,9 @@ new Vue({
                 }
                 this.fetchDocs(userId);
                 const data = await response.json();
-                this.showSuccessNotification('Logged in.');
                 self.showTabs = true;
                 self.user_details = data;
+                this.showSuccessNotification('Logged in.');
                 this.getAllPolls(userId);
                 this.openTab(null, 'Active');
                 if (self.user_details.roll > 0) {

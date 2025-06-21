@@ -278,16 +278,18 @@
             <div v-if="user_details.roll > 0" id="allUsers" class="tabcontent">
               <h3>Users</h3>
               <button @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create a user</button>
-              <div v-for="user in users" :key="user.id" style="margin-bottom: 16px; padding: 12px; border-bottom: 1px solid #eee;">
-                <p style="margin-bottom: 8px;">
-                  <strong>ID:</strong> {{ user.id }}<br>
-                  <strong>EMAIL:</strong> {{ user.email }}<br>
-                  <strong>ROLL:</strong> {{ user.roll }}
-                </p>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">Edit</button>
-                  <button @click="resendLink(user.email)">Resend link to email</button>
-                  <button v-if="user_details.roll == 2" @click="openDeleteUserDialog({id:user.id,email:user.email})">Delete</button>
+              
+              <div class="user-cards">
+                <div v-for="user in users" :key="user.id" class="user-card">
+                  <p><strong>ID:</strong> {{ user.id }}</p>
+                  <p><strong>EMAIL:</strong> {{ user.email }}</p>
+                  <p><strong>ROLL:</strong> {{ user.roll }}</p>
+                  
+                  <div class="user-buttons">
+                    <button @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">Edit</button>
+                    <button @click="resendLink(user.email)">Resend link to email</button>
+                    <button v-if="user_details.roll == 2" @click="openDeleteUserDialog({id:user.id,email:user.email})">Delete</button>
+                  </div>
                 </div>
               </div>
             </div>

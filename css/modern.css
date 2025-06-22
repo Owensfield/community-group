@@ -44,25 +44,27 @@ p {
 .hero-section {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    min-height: 100vh; /* fill viewport */
-    padding: 20px;
+    justify-content: center;
+    min-height: 100vh; /* fill screen height */
+    padding-top: 80px; /* better spacing below nav */
+    box-sizing: border-box;
     text-align: center;
-  }
+}
 
-  .hero-logo {
+.hero-logo {
+    max-width: 280px; /* a nice size for desktop + mobile */
+    margin-bottom: 20px;
+    animation: fadeIn 2s ease-in-out forwards;
     opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 1.2s ease forwards;
-  }
-  
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+}
+
+/* simple fade-in effect */
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
   
 
 .hero-text {

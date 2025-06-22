@@ -341,18 +341,18 @@ footer a:hover {
   
   .w3-top .menu {
     display: flex;
-    justify-content: center;
+    justify-content: space-around;  /* even spacing */
     align-items: center;
     flex-wrap: wrap;
-    padding: 0.5rem 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    min-height: 50px;  /* fixes height collapse */
+    padding: 0.5rem 0;  /* no side padding, just vertical */
+    min-height: 50px;
+    width: 100%;  /* full width */
   }
   
   .w3-top .menu a {
-    padding: 10px 16px;
-    margin: 4px 6px;
+    flex: 1 1 auto;  /* allow grow/shrink */
+    text-align: center;
+    padding: 10px 12px;
     font-weight: 600;
     color: #333;
     text-decoration: none;
@@ -367,17 +367,10 @@ footer a:hover {
   }
   
   @media (max-width: 600px) {
-    .w3-top .menu {
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-  
     .w3-top .menu a {
-      flex: 1 1 auto;
-      min-width: 20%;
-      padding: 8px;
-      margin: 2px 4px;
+      flex: 1 1 100%;  /* stack on small screens */
       font-size: 0.95rem;
+      padding: 10px;
     }
   }
   

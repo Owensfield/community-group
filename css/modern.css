@@ -329,3 +329,26 @@ footer a:hover {
     gap: 8px;
     margin-top: 12px;
   }
+  .w3-top .menu {
+    display: flex;
+    flex-wrap: nowrap; /* one line */
+    justify-content: space-around; /* space items evenly */
+    align-items: center;
+    width: 100%;
+  }
+  
+  .w3-top .menu a {
+    flex: 1 1 auto; /* let links shrink if needed */
+    padding: 10px 6px; /* a bit smaller padding for mobiles */
+    font-weight: 600;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.95rem;
+    text-align: center;
+    border-radius: 4px;
+  }
+  
+  .w3-top .menu a:hover {
+    background: #f0f0f0;
+    color: #111;
+  }

@@ -71,6 +71,16 @@ new Vue({
     computed: {
         parsedContent() {
             return this.selectedDoc ? marked.parse(this.selectedDoc.content) : '';
+        },
+        docsGroupedByYear() {
+            return this.docs.reduce((groups, doc) => {
+                const year = doc.year;
+                if (!groups[year]) {
+                    groups[year] = [];
+                }
+                groups[year].push(doc);
+                return groups;
+            }, {});
         }
     },
     methods: {
@@ -603,11 +613,16 @@ new Vue({
                 }
                 const data = await response.json();
         
-                this.docs = data.map(doc => ({
-                    ...doc,
-                    type: doc.name.endsWith('.pdf') ? 'pdf' : 'markdown',
-                    date: new Date(doc.date)
-                }));
+                this.docs = data.map(doc => {
+                    const dateObj = doc.date ? new Date(doc.date) : null;
+                    const year = dateObj ? dateObj.getFullYear() : 'Unknown';
+                    return {
+                        ...doc,
+                        type: doc.name.endsWith('.pdf') ? 'pdf' : 'markdown',
+                        date: dateObj,
+                        year: year
+                    };
+                });
         
                 // sort newest first
                 this.docs.sort((a, b) => b.date - a.date);

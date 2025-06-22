@@ -112,10 +112,7 @@
         </div>
 
         <div id="docs-app">
-          <div v-if="docs.length > 0" class="w3-card-4 w3-margin">
-            <div class="w3-container w3-light-grey">
-              <h3>Documentation</h3>
-            </div>
+          <div v-if="docs.length > 0" class="w3-card-4">
             <ul class="w3-ul">
               <div v-for="year in Object.keys(docsGroupedByYear).sort((a, b) => b - a)" :key="year" class="w3-margin-top">
                 <h4>{{ year }}</h4>
@@ -184,7 +181,7 @@
             {{ success_notification.message }}
           </div>
 
-          <div v-if="showTabs" class="w3-card-4 w3-margin">
+          <div v-if="showTabs" class="w3-card-4">
             <div class="tab">
               <button class="tablinks" @click="openTab($event, 'Active')">Active polls</button>
               <button class="tablinks" @click="openTab($event, 'Old')">Old polls</button>

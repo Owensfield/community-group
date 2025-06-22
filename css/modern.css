@@ -329,26 +329,55 @@ footer a:hover {
     gap: 8px;
     margin-top: 12px;
   }
+  .w3-top {
+    background: #ffffff;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 999;
+  }
+  
   .w3-top .menu {
     display: flex;
-    flex-wrap: nowrap; /* one line */
-    justify-content: space-around; /* space items evenly */
+    justify-content: center;
     align-items: center;
-    width: 100%;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 50px;  /* fixes height collapse */
   }
   
   .w3-top .menu a {
-    flex: 1 1 auto; /* let links shrink if needed */
-    padding: 10px 6px; /* a bit smaller padding for mobiles */
+    padding: 10px 16px;
+    margin: 4px 6px;
     font-weight: 600;
     color: #333;
     text-decoration: none;
-    font-size: 0.95rem;
-    text-align: center;
     border-radius: 4px;
+    font-size: 1rem;
+    white-space: nowrap;
   }
   
   .w3-top .menu a:hover {
     background: #f0f0f0;
     color: #111;
   }
+  
+  @media (max-width: 600px) {
+    .w3-top .menu {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  
+    .w3-top .menu a {
+      flex: 1 1 auto;
+      min-width: 20%;
+      padding: 8px;
+      margin: 2px 4px;
+      font-size: 0.95rem;
+    }
+  }
+  

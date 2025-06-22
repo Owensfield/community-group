@@ -275,7 +275,14 @@
             <div v-if="user_details.roll > 0" id="allUsers" class="tabcontent">
               <h3 style="display: flex; align-items: center;">
                 Users
-                <button @click="showUserIds = !showUserIds" style="margin-left: 10px; font-size: 14px;">
+                <button @click="showUserIds = !showUserIds" style="
+                  background: none;
+                  border: none;
+                  padding: 0;
+                  margin-left: 8px;
+                  font-size: 1.5rem;
+                  cursor: pointer;
+                ">
                   <span v-if="showUserIds">👁️</span>
                   <span v-else>🙈</span>
                 </button>

@@ -4,6 +4,9 @@ new Vue({
     el: '#app',
     data: {
         showTabs: false,
+        showUserIds: false,
+        showQrCodeDialog: false,
+        qrCodeUrl: '',
         activeTab: '',
         user_details: [],
         activePolls: [],
@@ -90,6 +93,23 @@ new Vue({
         }
     },
     methods: {
+        showQrCode(userId) {
+            this.qrCodeUrl = `https://owensfield.wales?id=${userId}`;
+            this.showQrCodeDialog = true;
+          
+            this.$nextTick(() => {
+              // Clear previous QR code
+              const qrContainer = document.getElementById('qrcode');
+              qrContainer.innerHTML = '';
+          
+              // Generate QR code
+              new QRCode(qrContainer, {
+                text: this.qrCodeUrl,
+                width: 200,
+                height: 200
+              });
+            });
+          },          
         async resendLink(resendLinkEmail) {
             try {
                 const response = await fetch(`${API_BASE_URL}/resend?email=` + resendLinkEmail, {

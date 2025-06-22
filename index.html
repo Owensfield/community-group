@@ -12,6 +12,7 @@
   <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
   <link rel="manifest" href="/manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <meta name="theme-color" content="#f06292">
 </head>
 
@@ -116,16 +117,18 @@
         <div id="docs-app">
           <div v-if="docs.length > 0" class="w3-card-4">
             <ul class="w3-ul">
-              <div v-for="year in Object.keys(docsGroupedByYear).sort((a, b) => b - a)" :key="year" class="w3-margin-top">
+              <div v-for="year in Object.keys(docsGroupedByYear).sort((a, b) => b - a)" :key="year"
+                class="w3-margin-top">
                 <h4 style="padding-left: 8px">{{ year }}</h4>
                 <ul class="w3-ul">
-                  <li v-for="doc in docsGroupedByYear[year]" :key="doc.name" class="w3-hover-light-grey" style="cursor: pointer;" @click="handleDocClick(doc)">
+                  <li v-for="doc in docsGroupedByYear[year]" :key="doc.name" class="w3-hover-light-grey"
+                    style="cursor: pointer;" @click="handleDocClick(doc)">
                     {{ doc.name }}
                     <span v-if="doc.type === 'pdf'" class="text-sm text-gray-500">(PDF)</span>
                     <span v-if="doc.type === 'markdown'" class="text-sm text-gray-500">(Markdown)</span>
                   </li>
                 </ul>
-              </div>              
+              </div>
             </ul>
           </div>
 
@@ -246,8 +249,8 @@
                 <br></br>
                 <label>Number of weeks to run for </label>
                 <br></br>
-                <input class="responsive-input" type="number" max="10" id="pollDuration"
-                  name="pollDuration" v-model="newPoll.duration"></input>
+                <input class="responsive-input" type="number" max="10" id="pollDuration" name="pollDuration"
+                  v-model="newPoll.duration"></input>
                 <br></br>
                 <button type="submit">Submit</button>
               </form>
@@ -270,20 +273,48 @@
             </div>
 
             <div v-if="user_details.roll > 0" id="allUsers" class="tabcontent">
-              <h3>Users</h3>
+              <h3 style="display: flex; align-items: center;">
+                Users
+                <button @click="showUserIds = !showUserIds" style="margin-left: 10px; font-size: 14px;">
+                  <span v-if="showUserIds">👁️</span>
+                  <span v-else>🙈</span>
+                </button>
+              </h3>
+
               <button @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create a user</button>
               <button @click="showEmailAllDialog = true" v-if="user_details.roll > 0">Email all users</button>
+
               <div class="user-cards">
                 <div v-for="user in users" :key="user.id" class="user-card">
-                  <p><strong>ID:</strong> {{ user.id }}</p>
+                  <p>
+                    <strong>ID:</strong>
+                    <input :type="showUserIds ? 'text' : 'password'" :value="user.id" readonly
+                      style="width: 100%; border: none; background: transparent; font-family: monospace;" />
+                  </p>
                   <p><strong>EMAIL:</strong> {{ user.email }}</p>
                   <p><strong>ROLL:</strong> {{ user.roll }}</p>
-                  
+
                   <div class="user-buttons">
                     <button @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">Edit</button>
                     <button @click="resendLink(user.email)">Resend link to email</button>
-                    <button v-if="user_details.roll == 2" @click="openDeleteUserDialog({id:user.id,email:user.email})">Delete</button>
+                    <button v-if="user_details.roll == 2"
+                      @click="openDeleteUserDialog({id:user.id,email:user.email})">Delete</button>
+                    <button @click="showQrCode(user.id)">QR Code</button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- QR Code dialog -->
+            <div v-if="showQrCodeDialog" class="w3-modal" style="display: block;">
+              <div class="w3-modal-content w3-card-4" style="max-width: 400px;">
+                <header class="w3-container w3-light-grey">
+                  <span @click="showQrCodeDialog = false" class="w3-button w3-display-topright">&times;</span>
+                  <b>QR Code</b>
+                </header>
+                <div class="w3-container" style="text-align: center; padding: 20px;">
+                  <div id="qrcode"></div>
+                  <p style="word-break: break-all; font-size: 0.9em; margin-top: 10px;">{{ qrCodeUrl }}</p>
                 </div>
               </div>
             </div>
@@ -313,29 +344,28 @@
             </div>
 
             <!-- Email all users dialog -->
-<div v-if="showEmailAllDialog" class="w3-modal" style="display: block;">
-  <div class="w3-modal-content w3-card-4">
-    <header class="w3-container w3-light-grey">
-      <span @click="showEmailAllDialog = false" class="w3-button w3-display-topright">&times;</span>
-      <b>Email All Users</b>
-    </header>
-    <div class="w3-container" style="max-height: 70vh; overflow-y: auto;">
-      <form @submit.prevent="sendEmailAllUsers">
-        <br></br>
-        <label>Subject:</label>
-        <input class="responsive-input" style="min-width: 400px;" type="text"
-          v-model="emailAllForm.subject"></input>
-        <br></br>
-        <label>Message:</label>
-        <textarea class="responsive-input" rows="8"
-          v-model="emailAllForm.message"></textarea>
-        <br></br>
-        <button type="submit">Send</button>
-        <br></br>
-      </form>
-    </div>
-  </div>
-</div>
+            <div v-if="showEmailAllDialog" class="w3-modal" style="display: block;">
+              <div class="w3-modal-content w3-card-4">
+                <header class="w3-container w3-light-grey">
+                  <span @click="showEmailAllDialog = false" class="w3-button w3-display-topright">&times;</span>
+                  <b>Email All Users</b>
+                </header>
+                <div class="w3-container" style="max-height: 70vh; overflow-y: auto;">
+                  <form @submit.prevent="sendEmailAllUsers">
+                    <br></br>
+                    <label>Subject:</label>
+                    <input class="responsive-input" style="min-width: 400px;" type="text"
+                      v-model="emailAllForm.subject"></input>
+                    <br></br>
+                    <label>Message:</label>
+                    <textarea class="responsive-input" rows="8" v-model="emailAllForm.message"></textarea>
+                    <br></br>
+                    <button type="submit">Send</button>
+                    <br></br>
+                  </form>
+                </div>
+              </div>
+            </div>
 
             <!-- Update user dialog -->
             <div v-if="showUserUpdateDialog" class="w3-modal" style="display: block;">

@@ -23,7 +23,7 @@ FRONTEND_LINK = os.getenv("FRONTEND_LINK")
 SUPER_USER_EMAIL = str(os.getenv("SUPER_USER_EMAIL"))
 
 # Email sending function
-def send_email(to_emails: list, subject: str, body: str):
+def send_email(to_emails: list, subject: str, body: str, bcc: bool = False):
     print(EMAIL, PASSWORD)
     # Gmail configuration
     smtp_server = "smtp.gmail.com"
@@ -34,19 +34,25 @@ def send_email(to_emails: list, subject: str, body: str):
     # Set up the email
     msg = MIMEMultipart()
     msg["From"] = sender_email
-    msg["To"] = ", ".join(to_emails)  # Join all emails into a single string
+    if bcc:
+        msg["To"] = sender_email
+        msg["Bcc"] = ", ".join(to_emails)
+    else:
+        msg["To"] = ", ".join(to_emails)
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
 
     try:
-        # Connect to Gmail's SMTP server
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()  # Upgrade connection to secure
+            server.starttls()
             server.login(sender_email, sender_password)
 
-            # Send the email to all recipients
             server.sendmail(sender_email, to_emails, msg.as_string())
-            print(f"Email sent successfully to: {', '.join(to_emails)}")
+
+            if bcc:
+                print(f"BCC email sent to {len(to_emails)} users")
+            else:
+                print(f"Email sent to: {', '.join(to_emails)}")
     except Exception as e:
         print(f"Failed to send email: {e}")
     

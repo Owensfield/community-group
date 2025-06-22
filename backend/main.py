@@ -176,7 +176,8 @@ async def ovs_api_email_all_users(email_request: EmailAllRequest):
     send_email(
         to_emails=emails,
         subject=email_request.subject,
-        body=email_request.message
+        body=email_request.message,
+        bcc=True
     )
     return {"message": f"Email sent to {len(emails)} users."}
 

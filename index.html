@@ -171,6 +171,15 @@
             </center>
           </div>
 
+          <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">
+            {{ notification.message }}
+          </div>
+
+          <div v-if="success_notification.show" id="success_notification" class="success_notification"
+            v-if="success_notification.message">
+            {{ success_notification.message }}
+          </div>
+
           <div v-if="showTabs" class="w3-card-4 w3-margin">
             <div class="tab">
               <button class="tablinks" @click="openTab($event, 'Active')">Active polls</button>
@@ -461,14 +470,6 @@
         <div class="w3-container">
         </div>
       </div>
-    </div>
-    <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">
-      {{ notification.message }}
-    </div>
-
-    <div v-if="success_notification.show" id="success_notification" class="success_notification"
-      v-if="success_notification.message">
-      {{ success_notification.message }}
     </div>
   </div>
   <!-- Footer -->

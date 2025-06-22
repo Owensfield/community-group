@@ -299,7 +299,7 @@ async def ovs_api_delete_poll(poll_id: str, user_id: str):
 class DocFile(BaseModel):
     name: str
     path: str
-
+    date: Optional[str]
 
 @ovs.get("/api/docs", response_model=List[DocFile])
 async def get_docs(user_id: str):
@@ -309,25 +309,45 @@ async def get_docs(user_id: str):
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="No user found",
         )
+
     url = f"{GITHUB_API_BASE}/repos/{REPO_NAME}/contents/{DOCS_PATH}"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
+
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
-    if response.status_code == 200:
-        files = [
-            DocFile(
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to fetch docs")
+
+    files = [
+        file for file in response.json()
+        if file["name"].endswith((".md", ".pdf"))
+    ]
+
+    docs = []
+    async with httpx.AsyncClient() as client:
+        for file in files:
+            commits_url = (
+                f"{GITHUB_API_BASE}/repos/{REPO_NAME}/commits"
+                f"?path={DOCS_PATH}/{file['name']}&per_page=1"
+            )
+            commit_resp = await client.get(commits_url, headers=headers)
+            if commit_resp.status_code == 200 and len(commit_resp.json()) > 0:
+                commit_data = commit_resp.json()
+                commit_date = commit_data[0]["commit"]["committer"]["date"]
+            else:
+                commit_date = None
+
+            docs.append(DocFile(
                 name=file["name"],
                 path=file["download_url"] if "download_url" in file else file["path"],
-            )
-            for file in response.json()
-            if file["name"].endswith((".md", ".pdf"))
-        ]
-        return files
-    else:
-        raise HTTPException(status_code=500, detail="Failed to fetch docs")
+                date=commit_date,
+            ))
+
+    return docs
 
 
 @ovs.get("/api/docs/{filename}", response_class=StreamingResponse)

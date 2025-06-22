@@ -221,6 +221,7 @@ new Vue({
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 this.fetchDocs(userId);
+                
                 const data = await response.json();
                 self.showTabs = true;
                 self.user_details = data;
@@ -601,10 +602,16 @@ new Vue({
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 const data = await response.json();
+        
                 this.docs = data.map(doc => ({
                     ...doc,
                     type: doc.name.endsWith('.pdf') ? 'pdf' : 'markdown',
+                    date: new Date(doc.date)
                 }));
+        
+                // sort newest first
+                this.docs.sort((a, b) => b.date - a.date);
+        
             } catch (error) {
                 console.error('Error fetching docs:', error);
             }

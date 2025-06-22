@@ -68,10 +68,10 @@ new Vue({
         selectedDoc: null,
         showDialog: false,
         showEmailAllDialog: false,
-emailAllForm: {
-    subject: '',
-    message: ''
-},
+        emailAllForm: {
+            subject: '',
+            message: ''
+        },
 
     },
     computed: {
@@ -113,7 +113,7 @@ emailAllForm: {
                     subject: this.emailAllForm.subject,
                     message: this.emailAllForm.message
                 };
-        
+
                 const response = await fetch(`${API_BASE_URL}/email_all_users`, {
                     method: 'POST',
                     headers: {
@@ -121,11 +121,11 @@ emailAllForm: {
                     },
                     body: JSON.stringify(payload)
                 });
-        
+
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-        
+
                 this.showSuccessNotification('Mass email sent!');
                 this.showEmailAllDialog = false;
                 this.emailAllForm.subject = '';
@@ -134,10 +134,10 @@ emailAllForm: {
                 this.showNotification('There was an error sending the email.');
                 console.error('Error sending mass email:', error);
             }
-        },              
+        },
         openTab(evt, tabName) {
             this.activeTab = tabName;  // <-- track active tab
-        
+
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
             for (i = 0; i < tabcontent.length; i++) {
@@ -147,7 +147,7 @@ emailAllForm: {
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
-        
+
             var cityElement = document.getElementById(tabName);
             if (cityElement) {
                 cityElement.style.display = "block";
@@ -265,13 +265,17 @@ emailAllForm: {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 this.fetchDocs(userId);
-                
+
                 const data = await response.json();
                 self.showTabs = true;
                 self.user_details = data;
                 this.showSuccessNotification('Logged in.');
                 this.getAllPolls(userId);
-                this.openTab(null, 'Active');
+
+                this.$nextTick(() => {
+                    this.openTab(null, 'Active');
+                });
+
                 if (self.user_details.roll > 0) {
                     this.getUsers(userId);
                 }
@@ -646,7 +650,7 @@ emailAllForm: {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
                 const data = await response.json();
-        
+
                 this.docs = data.map(doc => {
                     const dateObj = doc.date ? new Date(doc.date) : null;
                     const year = dateObj ? dateObj.getFullYear() : 'Unknown';
@@ -657,10 +661,10 @@ emailAllForm: {
                         year: year
                     };
                 });
-        
+
                 // sort newest first
                 this.docs.sort((a, b) => b.date - a.date);
-        
+
             } catch (error) {
                 console.error('Error fetching docs:', error);
             }

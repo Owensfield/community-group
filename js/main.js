@@ -92,6 +92,8 @@ new Vue({
             }
         },
         openTab(evt, tabName) {
+            this.activeTab = tabName;  // <-- track active tab
+        
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
             for (i = 0; i < tabcontent.length; i++) {
@@ -101,16 +103,17 @@ new Vue({
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
+        
             var cityElement = document.getElementById(tabName);
             if (cityElement) {
                 cityElement.style.display = "block";
                 if (evt) {
                     evt.currentTarget.className += " active";
                 } else {
-                    // Set the default tab to "Active"
-                    var defaultTab = document.querySelector(".tablinks[data-tab='Active']");
-                    if (defaultTab) {
-                        defaultTab.className += " active";
+                    // No event — set the correct button manually
+                    var defaultButton = Array.from(tablinks).find(btn => btn.textContent.trim().startsWith('Active'));
+                    if (defaultButton) {
+                        defaultButton.className += " active";
                     }
                 }
             } else {

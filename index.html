@@ -270,7 +270,7 @@
             <div v-if="user_details.roll > 0" id="allUsers" class="tabcontent">
               <h3>Users</h3>
               <button @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create a user</button>
-              
+              <button @click="showEmailAllDialog = true" v-if="user_details.roll > 0">Email all users</button>
               <div class="user-cards">
                 <div v-for="user in users" :key="user.id" class="user-card">
                   <p><strong>ID:</strong> {{ user.id }}</p>
@@ -309,6 +309,31 @@
                 </div>
               </div>
             </div>
+
+            <!-- Email all users dialog -->
+<div v-if="showEmailAllDialog" class="w3-modal" style="display: block;">
+  <div class="w3-modal-content w3-card-4">
+    <header class="w3-container w3-light-grey">
+      <span @click="showEmailAllDialog = false" class="w3-button w3-display-topright">&times;</span>
+      <b>Email All Users</b>
+    </header>
+    <div class="w3-container" style="max-height: 70vh; overflow-y: auto;">
+      <form @submit.prevent="sendEmailAllUsers">
+        <br></br>
+        <label>Subject:</label>
+        <input class="responsive-input" style="min-width: 400px;" type="text"
+          v-model="emailAllForm.subject"></input>
+        <br></br>
+        <label>Message:</label>
+        <textarea class="responsive-input" rows="8"
+          v-model="emailAllForm.message"></textarea>
+        <br></br>
+        <button type="submit">Send</button>
+        <br></br>
+      </form>
+    </div>
+  </div>
+</div>
 
             <!-- Update user dialog -->
             <div v-if="showUserUpdateDialog" class="w3-modal" style="display: block;">
@@ -476,7 +501,6 @@
   <!-- Footer -->
 
   <footer class="w3-container w3-padding-32 w3-light-grey w3-center">
-    <h4>Footer</h4>
     <a href="#" class="w3-button w3-black w3-margin"><i class="fa fa-arrow-up w3-margin-right"></i>To the top</a>
     <div class="w3-xlarge w3-section">
       <!--       <i class="fa fa-facebook-official w3-hover-opacity"></i>

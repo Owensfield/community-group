@@ -67,6 +67,12 @@ new Vue({
         resendLinkEmail: "",
         selectedDoc: null,
         showDialog: false,
+        showEmailAllDialog: false,
+emailAllForm: {
+    subject: '',
+    message: ''
+},
+
     },
     computed: {
         parsedContent() {
@@ -101,6 +107,34 @@ new Vue({
                 this.showNotification(error);
             }
         },
+        async sendEmailAllUsers() {
+            try {
+                const payload = {
+                    subject: this.emailAllForm.subject,
+                    message: this.emailAllForm.message
+                };
+        
+                const response = await fetch(`${API_BASE_URL}/email_all_users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+        
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+        
+                this.showSuccessNotification('Mass email sent!');
+                this.showEmailAllDialog = false;
+                this.emailAllForm.subject = '';
+                this.emailAllForm.message = '';
+            } catch (error) {
+                this.showNotification('There was an error sending the email.');
+                console.error('Error sending mass email:', error);
+            }
+        },              
         openTab(evt, tabName) {
             this.activeTab = tabName;  // <-- track active tab
         

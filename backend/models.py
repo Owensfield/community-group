@@ -69,6 +69,10 @@ class EmailRequest(BaseModel):
     subject: str
     body: str
 
+class EmailAllRequest(BaseModel):
+    subject: str
+    message: str
+
 class ContactForm(BaseModel):
     name: str
     email: EmailStr

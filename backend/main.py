@@ -20,7 +20,7 @@ from helpers import (
 from typing import List
 from pydantic import BaseModel
 from http import HTTPStatus
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from migrations import migrate
 from typing import Optional
@@ -51,7 +51,8 @@ from models import (
     UpdateConditions,
     EmailRequest,
     UpdatePollRun,
-    ContactForm
+    ContactForm,
+    EmailAllRequest
 )
 
 ovs = FastAPI()
@@ -165,6 +166,19 @@ async def ovs_api_resend_email(email: str):
         )
     return await resend_link_email(user)
 
+### Email everyone
+
+@ovs.post("/email_all_users")
+async def ovs_api_email_all_users(email_request: EmailAllRequest):
+    users = await get_users()
+    emails = [user.email for user in users if user.email]
+
+    send_email(
+        to_emails=emails,
+        subject=email_request.subject,
+        body=email_request.message
+    )
+    return {"message": f"Email sent to {len(emails)} users."}
 
 ### Polls
 

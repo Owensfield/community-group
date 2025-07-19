@@ -29,7 +29,6 @@ from crud import (
     update_user,
     get_user,
     get_users,
-    delete_user,
     create_poll,
     get_poll,
     get_polls,

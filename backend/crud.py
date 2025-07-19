@@ -69,7 +69,7 @@ async def get_user_by_email(email: str) -> UserData:
 
 
 async def get_users() -> List[UserData]:
-    rows = await db.fetchall("SELECT * FROM Users")
+    rows = await db.fetchall("SELECT * FROM Users WHERE active = 1")
     return [UserData(**row) for row in rows]
 
 
@@ -142,7 +142,7 @@ async def delete_poll(poll_id: str) -> None:
     return await db.execute("DELETE FROM Polls WHERE id = ?", (poll_id,))
 
 async def get_users_count() -> int:
-    row = await db.fetchone("SELECT COUNT(*) as count FROM Users")
+    row = await db.fetchone("SELECT COUNT(*) as count FROM Users WHERE active = 1")
     return row['count'] if row else 0
 
 async def update_poll(poll_id: str, user_id: str, opt_no: int) -> Optional[PollData]:

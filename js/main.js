@@ -548,7 +548,7 @@ new Vue({
         },
         async deleteUser(deleteData) {
             try {
-                const response = await fetch(API_BASE_URL + '/user' + '?admin_id=' + this.user_details.id + '&user_id=' + deleteData.id, {
+                const response = await fetch(API_BASE_URL + '/user' + '?user_id=' + deleteData.id, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'

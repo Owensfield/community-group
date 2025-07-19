@@ -133,26 +133,18 @@ async def ovs_api_get_users(user_id: str):
 
 
 @ovs.delete("/user")
-async def ovs_api_delete_user(user_id: str, admin_id: str):
-    print(user_id)
-    user = await get_user(admin_id)
-    if not user:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="No admin found",
-        )
-    if user.roll != 2:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Not an admin",
-        )
+async def ovs_api_delete_user(user_id: str):
     user = await get_user(user_id)
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="No user found",
         )
-    return await delete_user(user_id)
+    to_update = UserData(
+        id=user.id,
+        active=False
+    )
+    return await update_user(to_update)
 
 ### Resend Email
 

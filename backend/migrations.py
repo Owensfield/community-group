@@ -35,7 +35,7 @@ def migrate():
                   timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"""
     )
 
-    # Check if 'duration' column exists
+    # Check if 'duration' column exists in Polls
     cursor.execute("PRAGMA table_info(Polls);")
     columns = [column[1] for column in cursor.fetchall()]
     if 'duration' not in columns:
@@ -43,10 +43,27 @@ def migrate():
             """ALTER TABLE Polls ADD COLUMN duration INTEGER;"""
         )
 
-    # Check if 'startdate' column exists
+    # Check if 'startdate' column exists in Polls
     if 'startdate' not in columns:
         cursor.execute(
             """ALTER TABLE Polls ADD COLUMN startdate TEXT;"""
+        )
+
+
+    # Add 'renewed' column if it doesn't exist
+    cursor.execute("PRAGMA table_info(Users);")
+    user_columns = [column[1] for column in cursor.fetchall()]
+    if 'renewed' not in user_columns:
+        cursor.execute(
+            """ALTER TABLE Users ADD COLUMN renew BOOLEAN DEFAULT true;"""
+        )
+
+    # Add 'renewed' column if it doesn't exist
+    cursor.execute("PRAGMA table_info(Users);")
+    user_columns = [column[1] for column in cursor.fetchall()]
+    if 'renewed' not in user_columns:
+        cursor.execute(
+            """ALTER TABLE Users ADD COLUMN active BOOLEAN DEFAULT true;"""
         )
 
     cursor.execute(

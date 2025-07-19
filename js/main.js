@@ -237,6 +237,15 @@ new Vue({
                 this.showNotification(error);
             }
         },
+        async renewMembership() {
+            this.user_details.renew = false;
+            this.updateuser();
+        },
+        async cancelMembership() {
+            this.user_details.renew = true;
+            this.user_details.active = false;
+            this.updateuser();
+        },
         async updateUser() {
             self = this
             this.userDialogForm.admin_id = this.user_details.id;
@@ -296,6 +305,9 @@ new Vue({
                     this.openTab(null, 'Active');
                 });
 
+                if (self.user_details.renew) {
+                    this.renewDialog = true
+                }
                 if (self.user_details.roll > 0) {
                     this.getUsers(userId);
                 }

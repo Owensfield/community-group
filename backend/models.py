@@ -11,6 +11,8 @@ class UserData(BaseModel):
     id: str
     email: str
     roll: int
+    renew: Optional[bool] = True
+    active: Optional[bool] = True
     timestamp: Optional[str] = str(datetime.now())
 
 class UpdateUserData(BaseModel):

@@ -1,9 +1,8 @@
-const API_BASE_URL = "https://zero.wales";
-console.log(API_BASE_URL);
 new Vue({
     el: '#app',
     data: {
         showTabs: false,
+        API_BASE_URL: '',
         showUserIds: false,
         showQrCodeDialog: false,
         qrCodeUrl: '',
@@ -112,7 +111,7 @@ new Vue({
           },          
         async resendLink(resendLinkEmail) {
             try {
-                const response = await fetch(`${API_BASE_URL}/resend?email=` + resendLinkEmail, {
+                const response = await fetch(`${this.API_BASE_URL}/resend?email=` + resendLinkEmail, {
                     method: 'get',
                     headers: {
                         'Content-Type': 'application/json'
@@ -134,7 +133,7 @@ new Vue({
                     message: this.emailAllForm.message
                 };
 
-                const response = await fetch(`${API_BASE_URL}/email_all_users`, {
+                const response = await fetch(`${this.API_BASE_URL}/email_all_users`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -187,7 +186,7 @@ new Vue({
         async updatePoll(updateData) {
             console.log(updateData);
             try {
-                const response = await fetch(`${API_BASE_URL}/poll`, {
+                const response = await fetch(`${this.API_BASE_URL}/poll`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -218,7 +217,7 @@ new Vue({
             }
             console.log(dataToSend)
             try {
-                const response = await fetch(`${API_BASE_URL}/polls/run`, {
+                const response = await fetch(`${this.API_BASE_URL}/polls/run`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -250,7 +249,7 @@ new Vue({
             self = this
             this.userDialogForm.admin_id = this.user_details.id;
             try {
-                const response = await fetch(`${API_BASE_URL}/user`, {
+                const response = await fetch(`${this.API_BASE_URL}/user`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -283,7 +282,7 @@ new Vue({
         async getUser(userId) {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/user?user_id=${userId}`, {
+                const response = await fetch(`${this.API_BASE_URL}/user?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -320,7 +319,7 @@ new Vue({
         async getUsers() {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/users?user_id=${self.user_details.id}`, {
+                const response = await fetch(`${this.API_BASE_URL}/users?user_id=${self.user_details.id}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -343,7 +342,7 @@ new Vue({
         async getConditions() {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/conditions`, {
+                const response = await fetch(`${this.API_BASE_URL}/conditions`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -367,7 +366,7 @@ new Vue({
             this.conditionsData.user_id = this.user_details.id;
             console.log(this.conditionsData);
             try {
-                const response = await fetch(`${API_BASE_URL}/conditions`, {
+                const response = await fetch(`${this.API_BASE_URL}/conditions`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -392,7 +391,7 @@ new Vue({
         async getAllPolls(userId) {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/polls?user_id=${userId}`, {
+                const response = await fetch(`${this.API_BASE_URL}/polls?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -451,7 +450,7 @@ new Vue({
         },
         async createUser() {
             try {
-                const response = await fetch(`${API_BASE_URL}/user`, {
+                const response = await fetch(`${this.API_BASE_URL}/user`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -522,7 +521,7 @@ new Vue({
                 throw new Error('Something is wrong with the form');
             }
             try {
-                const response = await fetch(`${API_BASE_URL}/contactform`, {
+                const response = await fetch(`${this.API_BASE_URL}/contactform`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -548,7 +547,7 @@ new Vue({
         },
         async deleteUser(deleteData) {
             try {
-                const response = await fetch(API_BASE_URL + '/user' + '?user_id=' + deleteData.id, {
+                const response = await fetch(this.API_BASE_URL + '/user' + '?user_id=' + deleteData.id, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -570,7 +569,7 @@ new Vue({
         },
         async deletePoll(pollId) {
             try {
-                const response = await fetch(API_BASE_URL + '/poll?poll_id=' + pollId + '&user_id=' + this.user_details.id, {
+                const response = await fetch(this.API_BASE_URL + '/poll?poll_id=' + pollId + '&user_id=' + this.user_details.id, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -617,7 +616,7 @@ new Vue({
                 choices: this.newPoll.choices,
             };
             try {
-                const response = await fetch(API_BASE_URL + '/poll', {
+                const response = await fetch(this.API_BASE_URL + '/poll', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -672,7 +671,7 @@ new Vue({
         },
         async fetchDocs(userId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/docs?user_id=${userId}`, {
+                const response = await fetch(`${this.API_BASE_URL}/api/docs?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -706,11 +705,11 @@ new Vue({
                 if (doc.type === 'pdf') {
                     this.selectedDoc = {
                         name: doc.name,
-                        content: `${API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`,
+                        content: `${this.API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`,
                         type: 'pdf',
                     };
                 } else if (doc.type === 'markdown') {
-                    const response = await fetch(`${API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`);
+                    const response = await fetch(`${this.API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`);
                     if (!response.ok) {
                         throw new Error('Failed to fetch content');
                     }
@@ -728,8 +727,13 @@ new Vue({
         }
     },
     mounted() {
+        fetch("/config.json")
+        .then(res => res.json())
+        .then(config => {
+            this.API_BASE_URL = config.API_BASE_URL;
+            console.log(this.API_BASE_URL);
+        });
         this.notification.message = '';
-        const backend_url = 'http://127.0.0.1:8000';
         var slideIndex = 1;
         showDivs(slideIndex);
 

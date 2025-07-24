@@ -318,6 +318,8 @@
                   </p>
                   <p><strong>EMAIL:</strong> {{ user.email }}</p>
                   <p><strong>ROLL:</strong> {{ user.roll }}</p>
+                  <p><strong>RENEW:</strong> {{ user.renew }}</p>
+                  <p><strong>ACTIVE:</strong> {{ user.active }}</p>
 
                   <div class="user-buttons">
                     <button @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">Edit</button>

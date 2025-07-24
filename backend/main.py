@@ -27,6 +27,7 @@ from typing import Optional
 from crud import (
     create_user,
     update_user,
+    update_user_renew,
     get_user,
     get_users,
     create_poll,
@@ -98,19 +99,22 @@ async def ovs_api_create_user(data: CreateUserData):
 
 @ovs.put("/user")
 async def ovs_api_update_user(data: UpdateUserData):
-    user = await get_user(data.admin_id)
-    if user.roll < 1:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Not an admin",
-        )
+    if data.admin_id:
+        user = await get_user(data.admin_id)
+        if user.roll < 1:
+            to_update = UserData(
+                id=data.id,
+                email=data.email,
+                roll=data.roll
+            )
+            return await update_user(to_update)
+
     to_update = UserData(
         id=data.id,
-        email=data.email,
-        roll=data.roll
+        renew=data.renew,
+        active=data.active
     )
-    
-    return await update_user(to_update)
+    return await update_user_renew(to_update)
 
 @ovs.get("/user")
 async def ovs_api_get_user(user_id: str):

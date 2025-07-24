@@ -9,17 +9,19 @@ class CreateUserData(BaseModel):
 
 class UserData(BaseModel):
     id: str
-    email: str
-    roll: int
-    renew: Optional[bool] = True
+    email: Optional[str] = None
+    roll: Optional[int] = None
+    renew: Optional[bool] = False
     active: Optional[bool] = True
     timestamp: Optional[str] = str(datetime.now())
 
 class UpdateUserData(BaseModel):
     id: str
-    email: str
-    admin_id: str
-    roll: int
+    admin_id: Optional[str] = None
+    email: Optional[str] = None
+    roll: Optional[int] = 0
+    renew: Optional[bool] = False
+    active: Optional[bool] = True
 
 class CreatePollData(BaseModel):
     id: Optional[str] = None

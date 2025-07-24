@@ -63,6 +63,13 @@ async def update_user(data: UserData) -> UserData:
     )
     return await get_user(data.id)
 
+async def update_user_renew(data: UserData) -> UserData:
+    await db.execute(
+        "UPDATE Users SET renew = ?, active = ? WHERE id = ?",
+        (data.renew, data.active, data.id)
+    )
+    return await get_user(data.id)
+
 async def get_user_by_email(email: str) -> UserData:
     row = await db.fetchone("SELECT * FROM Users WHERE email = ?", (email,))
     return UserData(**row) if row else None

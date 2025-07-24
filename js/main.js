@@ -2,12 +2,14 @@ new Vue({
     el: '#app',
     data: {
         showTabs: false,
+        showUserRenewDialog: false,
         API_BASE_URL: '',
         showUserIds: false,
         showQrCodeDialog: false,
         qrCodeUrl: '',
         activeTab: '',
-        user_details: [],
+        user_details: {},
+        user_details_test: {},
         activePolls: [],
         pollsInReview: [],
         oldPolls: [],
@@ -238,32 +240,49 @@ new Vue({
         },
         async renewMembership() {
             this.user_details.renew = false;
-            this.updateuser();
+            this.user_details.active = true;
+            data = {
+                id: this.user_details.id,
+                renew: this.user_details.renew,
+                active: this.user_details.active
+            }
+            this.updateUser(data);
         },
         async cancelMembership() {
             this.user_details.renew = true;
             this.user_details.active = false;
-            this.updateuser();
+            data = {
+                id: this.user_details.id,
+                renew: this.user_details.renew,
+                active: this.user_details.active
+            }
+            this.updateUser(data);
         },
-        async updateUser() {
+        async updateUser(data) {
             self = this
-            this.userDialogForm.admin_id = this.user_details.id;
+            if(data.email) {
+                data.admin_id = this.user_details.id;
+            }
             try {
                 const response = await fetch(`${this.API_BASE_URL}/user`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(this.userDialogForm)
+                    body: JSON.stringify(data)
                 });
 
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                this.getUsers();
+                if(data.email) {
+                  this.getUsers();
+                }
                 this.showSuccessNotification('User updated.');
                 this.showUserUpdateDialog = false;
-
+                if (data.active) {
+                    this.showUserRenewDialog = false;
+                }
             } catch (error) {
                 this.showNotification(error);
             }
@@ -297,16 +316,20 @@ new Vue({
                 const data = await response.json();
                 self.showTabs = true;
                 self.user_details = data;
+                console.log(this.user_details)
                 this.showSuccessNotification('Logged in.');
                 this.getAllPolls(userId);
 
                 this.$nextTick(() => {
                     this.openTab(null, 'Active');
+                    console.log("user_details after fetch", self.user_details);
+                    console.log("user_details.renew", self.user_details.renew);
+                    if (self.user_details.renew) {
+                        this.showUserRenewDialog = true
+                    }
                 });
 
-                if (self.user_details.renew) {
-                    this.renewDialog = true
-                }
+                
                 if (self.user_details.roll > 0) {
                     this.getUsers(userId);
                 }
@@ -643,7 +666,7 @@ new Vue({
                 this.newPoll.choices[i] = this.newPoll.choices[i].replace(/,/g, ';');
             }
         },
-        startFunct() {
+        async startFunct() {
             const urlParams = new URLSearchParams(window.location.search);
             userId = urlParams.get('id');
 
@@ -655,7 +678,7 @@ new Vue({
             else {
                 userId = localStorage.getItem("userId");
                 if (userId) {
-                    this.getUser(userId);
+                    await this.getUser(userId);
                 }
             }
             // remove the ID
@@ -726,13 +749,22 @@ new Vue({
             }
         }
     },
-    mounted() {
-        fetch("/config.json")
-        .then(res => res.json())
-        .then(config => {
+    async created() {
+        try {
+            const response = await fetch("js/config.json");
+            const config = await response.json();
             this.API_BASE_URL = config.API_BASE_URL;
             console.log(this.API_BASE_URL);
-        });
+    
+            // Call startFunct only after API_BASE_URL is set
+            await this.startFunct();
+        } catch (error) {
+            console.error('Error fetching config:', error);
+        }
+    
+        console.log(this.user_details);
+    },
+    mounted() {
         this.notification.message = '';
         var slideIndex = 1;
         showDivs(slideIndex);
@@ -764,7 +796,6 @@ new Vue({
             }
             x[slideIndex - 1].style.display = "block";
         }
-        this.startFunct();
         self = this;
         this.notification.show = false;
     }

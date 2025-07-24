@@ -61,7 +61,7 @@ def migrate():
     # Add 'renewed' column if it doesn't exist
     cursor.execute("PRAGMA table_info(Users);")
     user_columns = [column[1] for column in cursor.fetchall()]
-    if 'renew' not in user_columns:
+    if 'active' not in user_columns:
         cursor.execute(
             """ALTER TABLE Users ADD COLUMN active BOOLEAN DEFAULT true;"""
         )

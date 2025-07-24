@@ -1,4 +1,4 @@
-const CACHE_NAME = 'owensfield-cache-v3';
+const CACHE_NAME = 'owensfield-cache-v4';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',

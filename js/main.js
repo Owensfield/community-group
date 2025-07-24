@@ -1,14 +1,15 @@
-const API_BASE_URL = "https://zero.wales";
-console.log(API_BASE_URL);
 new Vue({
     el: '#app',
     data: {
         showTabs: false,
+        showUserRenewDialog: false,
+        API_BASE_URL: '',
         showUserIds: false,
         showQrCodeDialog: false,
         qrCodeUrl: '',
         activeTab: '',
-        user_details: [],
+        user_details: {},
+        user_details_test: {},
         activePolls: [],
         pollsInReview: [],
         oldPolls: [],
@@ -112,7 +113,7 @@ new Vue({
           },          
         async resendLink(resendLinkEmail) {
             try {
-                const response = await fetch(`${API_BASE_URL}/resend?email=` + resendLinkEmail, {
+                const response = await fetch(`${this.API_BASE_URL}/resend?email=` + resendLinkEmail, {
                     method: 'get',
                     headers: {
                         'Content-Type': 'application/json'
@@ -134,7 +135,7 @@ new Vue({
                     message: this.emailAllForm.message
                 };
 
-                const response = await fetch(`${API_BASE_URL}/email_all_users`, {
+                const response = await fetch(`${this.API_BASE_URL}/email_all_users`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -187,7 +188,7 @@ new Vue({
         async updatePoll(updateData) {
             console.log(updateData);
             try {
-                const response = await fetch(`${API_BASE_URL}/poll`, {
+                const response = await fetch(`${this.API_BASE_URL}/poll`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -218,7 +219,7 @@ new Vue({
             }
             console.log(dataToSend)
             try {
-                const response = await fetch(`${API_BASE_URL}/polls/run`, {
+                const response = await fetch(`${this.API_BASE_URL}/polls/run`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -239,32 +240,49 @@ new Vue({
         },
         async renewMembership() {
             this.user_details.renew = false;
-            this.updateuser();
+            this.user_details.active = true;
+            data = {
+                id: this.user_details.id,
+                renew: this.user_details.renew,
+                active: this.user_details.active
+            }
+            this.updateUser(data);
         },
         async cancelMembership() {
             this.user_details.renew = true;
             this.user_details.active = false;
-            this.updateuser();
+            data = {
+                id: this.user_details.id,
+                renew: this.user_details.renew,
+                active: this.user_details.active
+            }
+            this.updateUser(data);
         },
-        async updateUser() {
+        async updateUser(data) {
             self = this
-            this.userDialogForm.admin_id = this.user_details.id;
+            if(data.email) {
+                data.admin_id = this.user_details.id;
+            }
             try {
-                const response = await fetch(`${API_BASE_URL}/user`, {
+                const response = await fetch(`${this.API_BASE_URL}/user`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(this.userDialogForm)
+                    body: JSON.stringify(data)
                 });
 
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                this.getUsers();
+                if(data.email) {
+                  this.getUsers();
+                }
                 this.showSuccessNotification('User updated.');
                 this.showUserUpdateDialog = false;
-
+                if (data.active) {
+                    this.showUserRenewDialog = false;
+                }
             } catch (error) {
                 this.showNotification(error);
             }
@@ -283,7 +301,7 @@ new Vue({
         async getUser(userId) {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/user?user_id=${userId}`, {
+                const response = await fetch(`${this.API_BASE_URL}/user?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -298,16 +316,20 @@ new Vue({
                 const data = await response.json();
                 self.showTabs = true;
                 self.user_details = data;
+                console.log(this.user_details)
                 this.showSuccessNotification('Logged in.');
                 this.getAllPolls(userId);
 
                 this.$nextTick(() => {
                     this.openTab(null, 'Active');
+                    console.log("user_details after fetch", self.user_details);
+                    console.log("user_details.renew", self.user_details.renew);
+                    if (self.user_details.renew) {
+                        this.showUserRenewDialog = true
+                    }
                 });
 
-                if (self.user_details.renew) {
-                    this.renewDialog = true
-                }
+                
                 if (self.user_details.roll > 0) {
                     this.getUsers(userId);
                 }
@@ -320,7 +342,7 @@ new Vue({
         async getUsers() {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/users?user_id=${self.user_details.id}`, {
+                const response = await fetch(`${this.API_BASE_URL}/users?user_id=${self.user_details.id}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -343,7 +365,7 @@ new Vue({
         async getConditions() {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/conditions`, {
+                const response = await fetch(`${this.API_BASE_URL}/conditions`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -367,7 +389,7 @@ new Vue({
             this.conditionsData.user_id = this.user_details.id;
             console.log(this.conditionsData);
             try {
-                const response = await fetch(`${API_BASE_URL}/conditions`, {
+                const response = await fetch(`${this.API_BASE_URL}/conditions`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -392,7 +414,7 @@ new Vue({
         async getAllPolls(userId) {
             self = this;
             try {
-                const response = await fetch(`${API_BASE_URL}/polls?user_id=${userId}`, {
+                const response = await fetch(`${this.API_BASE_URL}/polls?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -451,7 +473,7 @@ new Vue({
         },
         async createUser() {
             try {
-                const response = await fetch(`${API_BASE_URL}/user`, {
+                const response = await fetch(`${this.API_BASE_URL}/user`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -522,7 +544,7 @@ new Vue({
                 throw new Error('Something is wrong with the form');
             }
             try {
-                const response = await fetch(`${API_BASE_URL}/contactform`, {
+                const response = await fetch(`${this.API_BASE_URL}/contactform`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -548,7 +570,7 @@ new Vue({
         },
         async deleteUser(deleteData) {
             try {
-                const response = await fetch(API_BASE_URL + '/user' + '?user_id=' + deleteData.id, {
+                const response = await fetch(this.API_BASE_URL + '/user' + '?user_id=' + deleteData.id, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -570,7 +592,7 @@ new Vue({
         },
         async deletePoll(pollId) {
             try {
-                const response = await fetch(API_BASE_URL + '/poll?poll_id=' + pollId + '&user_id=' + this.user_details.id, {
+                const response = await fetch(this.API_BASE_URL + '/poll?poll_id=' + pollId + '&user_id=' + this.user_details.id, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -617,7 +639,7 @@ new Vue({
                 choices: this.newPoll.choices,
             };
             try {
-                const response = await fetch(API_BASE_URL + '/poll', {
+                const response = await fetch(this.API_BASE_URL + '/poll', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -644,7 +666,7 @@ new Vue({
                 this.newPoll.choices[i] = this.newPoll.choices[i].replace(/,/g, ';');
             }
         },
-        startFunct() {
+        async startFunct() {
             const urlParams = new URLSearchParams(window.location.search);
             userId = urlParams.get('id');
 
@@ -656,7 +678,7 @@ new Vue({
             else {
                 userId = localStorage.getItem("userId");
                 if (userId) {
-                    this.getUser(userId);
+                    await this.getUser(userId);
                 }
             }
             // remove the ID
@@ -672,7 +694,7 @@ new Vue({
         },
         async fetchDocs(userId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/docs?user_id=${userId}`, {
+                const response = await fetch(`${this.API_BASE_URL}/api/docs?user_id=${userId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -706,11 +728,11 @@ new Vue({
                 if (doc.type === 'pdf') {
                     this.selectedDoc = {
                         name: doc.name,
-                        content: `${API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`,
+                        content: `${this.API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`,
                         type: 'pdf',
                     };
                 } else if (doc.type === 'markdown') {
-                    const response = await fetch(`${API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`);
+                    const response = await fetch(`${this.API_BASE_URL}/api/docs/${doc.name}?user_id=${this.user_details.id}`);
                     if (!response.ok) {
                         throw new Error('Failed to fetch content');
                     }
@@ -727,9 +749,23 @@ new Vue({
             }
         }
     },
+    async created() {
+        try {
+            const response = await fetch("js/config.json");
+            const config = await response.json();
+            this.API_BASE_URL = config.API_BASE_URL;
+            console.log(this.API_BASE_URL);
+    
+            // Call startFunct only after API_BASE_URL is set
+            await this.startFunct();
+        } catch (error) {
+            console.error('Error fetching config:', error);
+        }
+    
+        console.log(this.user_details);
+    },
     mounted() {
         this.notification.message = '';
-        const backend_url = 'http://127.0.0.1:8000';
         var slideIndex = 1;
         showDivs(slideIndex);
 
@@ -760,7 +796,6 @@ new Vue({
             }
             x[slideIndex - 1].style.display = "block";
         }
-        this.startFunct();
         self = this;
         this.notification.show = false;
     }

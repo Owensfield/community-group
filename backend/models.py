@@ -47,6 +47,23 @@ class PollData(BaseModel):
     complete: Optional[bool] = None
     timestamp: Optional[str] = None
 
+class DocFile(BaseModel):
+    name: str
+    path: str
+    date: Optional[str]
+
+class PaginatedDocs(BaseModel):
+    items: List[DocFile]
+    total: int
+    page: int
+    page_size: int
+
+class PaginatedPolls(BaseModel):
+    items: List[PollData]
+    total: int
+    page: int
+    page_size: int
+
 class UpdatePollRun(BaseModel):
     id: Optional[str] = None
     duration: Optional[int] = 0

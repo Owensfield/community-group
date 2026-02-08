@@ -9,11 +9,9 @@ new Vue({
         qrCodeUrl: '',
         activeTab: '',
         user_details: {},
-        user_details_test: {},
         activePolls: [],
         pollsInReview: [],
         oldPolls: [],
-        suggestPolls: [],
         contactForm: {
             name: "",
             email: "",
@@ -22,15 +20,15 @@ new Vue({
         },
         errors: {},
         captcha: {
-            number1: Math.floor(Math.random() * 10), // First random number
-            number2: Math.floor(Math.random() * 10), // Second random number
-            answer: null, // User-provided answer
+            number1: Math.floor(Math.random() * 10),
+            number2: Math.floor(Math.random() * 10),
+            answer: null,
         },
-        showModal: false,
         showUserCreateDialog: false,
         showUserUpdateDialog: false,
         showUserDeleteDialog: false,
         showPollRunUpdateDialog: false,
+        updatePollRun: {},
         userDialogForm: {
             id: "",
             email: "",
@@ -40,12 +38,11 @@ new Vue({
             id: "",
             email: ""
         },
-        picked: 0,
         newPoll: {
             title: '',
-            choices: ''
+            choices: '',
+            duration: 1
         },
-        approvedPoll: "",
         notification: {
             message: '',
             show: false
@@ -55,19 +52,17 @@ new Vue({
             show: false
         },
         users: [],
-        newUser: {
-            email: '',
-            roll: 0
-        },
-        qrCodeToShow: "",
-        deleteUserData: {
-            user_id: ''
-        },
         conditionsData: {
             quorum: 0,
             threshold: 0
         },
         docs: [],
+        docsLoading: false,
+        docsPagination: {
+            page: 1,
+            pageSize: 12,
+            total: 0
+        },
         resendLinkEmail: "",
         selectedDoc: null,
         showDialog: false,
@@ -76,7 +71,16 @@ new Vue({
             subject: '',
             message: ''
         },
-
+        pollsLoading: {
+            active: false,
+            review: false,
+            old: false
+        },
+        pollPagination: {
+            active: { page: 1, pageSize: 6, total: 0 },
+            review: { page: 1, pageSize: 6, total: 0 },
+            old: { page: 1, pageSize: 6, total: 0 }
+        }
     },
     computed: {
         parsedContent() {
@@ -91,38 +95,65 @@ new Vue({
                 groups[year].push(doc);
                 return groups;
             }, {});
+        },
+        docsYears() {
+            const years = Object.keys(this.docsGroupedByYear);
+            return years.sort((a, b) => {
+                if (a === 'Unknown') return 1;
+                if (b === 'Unknown') return -1;
+                return b - a;
+            });
+        },
+        docsTotalPages() {
+            const totalPages = Math.ceil(this.docsPagination.total / this.docsPagination.pageSize);
+            return totalPages || 1;
         }
     },
     methods: {
+        buildQuery(params) {
+            const search = new URLSearchParams();
+            Object.entries(params || {}).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    search.append(key, value);
+                }
+            });
+            const query = search.toString();
+            return query ? `?${query}` : '';
+        },
+        async apiRequest(path, options = {}) {
+            const response = await fetch(`${this.API_BASE_URL}${path}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                ...options
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response;
+        },
+        async apiGet(path, params) {
+            const query = this.buildQuery(params);
+            return this.apiRequest(`${path}${query}`, { method: 'GET' });
+        },
         showQrCode(userId) {
             this.qrCodeUrl = `https://owensfield.wales?id=${userId}`;
             this.showQrCodeDialog = true;
-          
+
             this.$nextTick(() => {
-              // Clear previous QR code
-              const qrContainer = document.getElementById('qrcode');
-              qrContainer.innerHTML = '';
-          
-              // Generate QR code
-              new QRCode(qrContainer, {
-                text: this.qrCodeUrl,
-                width: 200,
-                height: 200
-              });
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: this.qrCodeUrl,
+                    width: 200,
+                    height: 200
+                });
             });
-          },          
+        },
         async resendLink(resendLinkEmail) {
             try {
-                const response = await fetch(`${this.API_BASE_URL}/resend?email=` + resendLinkEmail, {
-                    method: 'get',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
+                await this.apiGet('/resend', { email: resendLinkEmail });
                 this.showSuccessNotification('Email sent, check your inbox.');
             } catch (error) {
                 this.showNotification(error);
@@ -135,17 +166,10 @@ new Vue({
                     message: this.emailAllForm.message
                 };
 
-                const response = await fetch(`${this.API_BASE_URL}/email_all_users`, {
+                await this.apiRequest('/email_all_users', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(payload)
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
 
                 this.showSuccessNotification('Mass email sent!');
                 this.showEmailAllDialog = false;
@@ -157,26 +181,24 @@ new Vue({
             }
         },
         openTab(evt, tabName) {
-            this.activeTab = tabName;  // <-- track active tab
+            this.activeTab = tabName;
 
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
                 tabcontent[i].style.display = "none";
             }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
 
-            var cityElement = document.getElementById(tabName);
-            if (cityElement) {
-                cityElement.style.display = "block";
+            const tabElement = document.getElementById(tabName);
+            if (tabElement) {
+                tabElement.style.display = "block";
                 if (evt) {
                     evt.currentTarget.className += " active";
                 } else {
-                    // No event — set the correct button manually
-                    var defaultButton = Array.from(tablinks).find(btn => btn.textContent.trim().startsWith('Active'));
+                    const defaultButton = Array.from(tablinks).find(btn => btn.textContent.trim().startsWith('Active'));
                     if (defaultButton) {
                         defaultButton.className += " active";
                     }
@@ -184,99 +206,91 @@ new Vue({
             } else {
                 console.error(`Element not found.`);
             }
+
+            this.ensureTabData(tabName);
+        },
+        ensureTabData(tabName) {
+            if (!this.user_details.id) {
+                return;
+            }
+            if (tabName === 'Active') {
+                this.fetchPolls('active');
+            }
+            if (tabName === 'Old') {
+                this.fetchPolls('old');
+            }
+            if (tabName === 'Review' && this.user_details.roll > 0) {
+                this.fetchPolls('review');
+            }
         },
         async updatePoll(updateData) {
-            console.log(updateData);
             try {
-                const response = await fetch(`${this.API_BASE_URL}/poll`, {
+                await this.apiRequest('/poll', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(updateData)
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                const data = await response.json();
                 this.showSuccessNotification('Poll updated successfully.');
-                this.getAllPolls(userId);
+                if (updateData.confirm) {
+                    await this.fetchPolls('review');
+                    await this.fetchPolls('active');
+                } else {
+                    await this.fetchPolls('active');
+                }
             } catch (error) {
                 this.showNotification(error);
             }
         },
-        async showPollUpdateRunDialog(poll) {
+        showPollUpdateRunDialog(poll) {
             this.showPollRunUpdateDialog = true;
             this.updatePollRun = poll;
         },
         async pollRunUpdate(updateData) {
-            dataToSend = {
+            const dataToSend = {
                 id: updateData.id,
                 admin_id: this.user_details.id,
-                duration: parseInt(updateData.duration),
+                duration: parseInt(updateData.duration, 10),
                 complete: (updateData.complete == "true")
-            }
-            console.log(dataToSend)
+            };
             try {
-                const response = await fetch(`${this.API_BASE_URL}/polls/run`, {
+                await this.apiRequest('/polls/run', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(dataToSend)
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                this.getAllPolls(this.user_details.id);
-                this.showPollRunUpdateDialog = false
+                this.showPollRunUpdateDialog = false;
                 this.showSuccessNotification('Poll updated successfully.');
-                this.getAllPolls(userId);
+                await this.fetchPolls('active');
+                await this.fetchPolls('old');
             } catch (error) {
                 this.showNotification(error);
             }
         },
         async renewMembership() {
-            this.user_details.renew = false;
-            this.user_details.active = true;
-            data = {
+            const data = {
                 id: this.user_details.id,
-                renew: this.user_details.renew,
-                active: this.user_details.active
-            }
+                renew: false,
+                active: true
+            };
             this.updateUser(data);
         },
         async cancelMembership() {
-            this.user_details.renew = true;
-            this.user_details.active = false;
-            data = {
+            const data = {
                 id: this.user_details.id,
-                renew: this.user_details.renew,
-                active: this.user_details.active
-            }
+                renew: true,
+                active: false
+            };
             this.updateUser(data);
         },
         async updateUser(data) {
-            self = this
-            if(data.email) {
-                data.admin_id = this.user_details.id;
-            }
             try {
-                const response = await fetch(`${this.API_BASE_URL}/user`, {
+                if (data.email) {
+                    data.admin_id = this.user_details.id;
+                }
+                await this.apiRequest('/user', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(data)
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                if(data.email) {
-                  this.getUsers();
+                if (data.email) {
+                    this.getUsers();
                 }
                 this.showSuccessNotification('User updated.');
                 this.showUserUpdateDialog = false;
@@ -287,121 +301,72 @@ new Vue({
                 this.showNotification(error);
             }
         },
-        async openUpdateUserDialog(updateData) {
+        openUpdateUserDialog(updateData) {
             this.showUserUpdateDialog = true;
             this.userDialogForm.id = updateData.id;
             this.userDialogForm.email = updateData.email;
             this.userDialogForm.roll = updateData.roll;
         },
-        async openDeleteUserDialog(deleteData) {
+        openDeleteUserDialog(deleteData) {
             this.showUserDeleteDialog = true;
             this.deleteUserDialogForm.id = deleteData.id;
             this.deleteUserDialogForm.email = deleteData.email;
         },
         async getUser(userId) {
-            self = this;
             try {
-                const response = await fetch(`${this.API_BASE_URL}/user?user_id=${userId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                this.fetchDocs(userId);
-
+                const response = await this.apiGet('/user', { user_id: userId });
                 const data = await response.json();
-                self.showTabs = true;
-                self.user_details = data;
-                console.log(this.user_details)
+                this.showTabs = true;
+                this.user_details = data;
                 this.showSuccessNotification('Logged in.');
-                this.getAllPolls(userId);
+                await this.fetchDocs(userId);
+                await this.fetchPolls('active');
+                await this.fetchPolls('old');
+                if (this.user_details.roll > 0) {
+                    await this.fetchPolls('review');
+                    this.getUsers();
+                }
+                this.getConditions();
 
                 this.$nextTick(() => {
                     this.openTab(null, 'Active');
-                    console.log("user_details after fetch", self.user_details);
-                    console.log("user_details.renew", self.user_details.renew);
-                    if (self.user_details.renew) {
-                        this.showUserRenewDialog = true
+                    if (this.user_details.renew) {
+                        this.showUserRenewDialog = true;
                     }
                 });
-
-                
-                if (self.user_details.roll > 0) {
-                    this.getUsers(userId);
-                }
-                this.getConditions();
             } catch (error) {
                 this.showNotification('There was an error logging in, please try again with correct ID.');
                 console.error('There has been a problem with your fetch operation:', error);
             }
         },
         async getUsers() {
-            self = this;
             try {
-                const response = await fetch(`${this.API_BASE_URL}/users?user_id=${self.user_details.id}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
+                const response = await this.apiGet('/users', { user_id: this.user_details.id });
                 const data = await response.json();
-                console.log(data)
-                self.users = data;
-                // Process the data as needed
+                this.users = data;
             } catch (error) {
                 this.showNotification('There was an error fetching users, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);
             }
         },
         async getConditions() {
-            self = this;
             try {
-                const response = await fetch(`${this.API_BASE_URL}/conditions`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
+                const response = await this.apiGet('/conditions');
                 const data = await response.json();
-                console.log(data)
-                self.conditionsData = data;
-                // Process the data as needed
+                this.conditionsData = data;
             } catch (error) {
                 console.error('There has been a problem fetching conditions:', error);
             }
         },
         async conditionsUpdate() {
-            self = this
-            this.conditionsData.user_id = this.user_details.id;
-            console.log(this.conditionsData);
             try {
-                const response = await fetch(`${this.API_BASE_URL}/conditions`, {
+                this.conditionsData.user_id = this.user_details.id;
+                const response = await this.apiRequest('/conditions', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(this.conditionsData)
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
                 const data = await response.json();
-                self.conditionsData = data;
+                this.conditionsData = data;
                 this.showSuccessNotification('Conditions updated.');
             } catch (error) {
                 this.showNotification(error);
@@ -411,73 +376,102 @@ new Vue({
             const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
             return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
         },
-        async getAllPolls(userId) {
-            self = this;
-            try {
-                const response = await fetch(`${this.API_BASE_URL}/polls?user_id=${userId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+        parsePollChoices(poll) {
+            const choices = poll.choices ? JSON.parse(poll.choices) : [];
+            return {
+                ...poll,
+                choices
+            };
+        },
+        formatOldPolls(polls) {
+            return polls.map(poll => {
+                const maxVotes = Math.max(...poll.choices.map(choice => choice[1]));
+                const topChoices = poll.choices.filter(choice => choice[1] === maxVotes);
+
+                const resultChoices = poll.choices.map(choice => {
+                    return {
+                        name: choice[0],
+                        votes: choice[1],
+                        isTopChoice: choice[1] === maxVotes
+                    };
                 });
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
+                resultChoices.sort((a, b) => b.votes - a.votes);
+
+                const result = {
+                    ...poll,
+                    choices: resultChoices
+                };
+
+                if (topChoices.length > 1) {
+                    result.choice = "Draw: " + topChoices.map(choice => choice[0]).join(", ");
+                } else if (topChoices.length === 1) {
+                    result.choice = "Winner: " + topChoices[0][0];
                 }
 
+                return result;
+            });
+        },
+        async fetchPolls(status) {
+            if (!this.user_details.id) {
+                return;
+            }
+            const pagination = this.pollPagination[status];
+            if (!pagination) {
+                return;
+            }
+            this.pollsLoading[status] = true;
+            try {
+                const response = await this.apiGet('/polls', {
+                    user_id: this.user_details.id,
+                    status,
+                    page: pagination.page,
+                    page_size: pagination.pageSize
+                });
                 const data = await response.json();
-
-                // Process the polls to split choices and format them
-                const processedPolls = data.map(poll => {
-                    const choices = JSON.parse(poll.choices);
-                    return {
-                        ...poll,
-                        choices: choices
-                    };
-                });
-
-                // Split the polls into activePolls, pollsInReview, and oldPolls
-                self.activePolls = processedPolls.filter(poll => poll.confirms >= 4 && !poll.complete);
-                self.pollsInReview = processedPolls.filter(poll => poll.confirms < 4 && !poll.complete);
-                self.oldPolls = processedPolls.filter(poll => poll.complete).map(poll => {
-                    const maxVotes = Math.max(...poll.choices.map(choice => choice[1]));
-                    const topChoices = poll.choices.filter(choice => choice[1] === maxVotes);
-
-                    let resultChoices = poll.choices.map(choice => {
-                        return {
-                            name: choice[0],
-                            votes: choice[1],
-                            isTopChoice: choice[1] === maxVotes
-                        };
-                    });
-
-                    resultChoices.sort((a, b) => b.votes - a.votes); // Sort choices by votes in descending order
-
-                    const result = {
-                        ...poll,
-                        choices: resultChoices
-                    };
-
-                    if (topChoices.length > 1) {
-                        result.choice = "Draw: " + topChoices.map(choice => choice[0]).join(", ");
-                    } else {
-                        result.choice = "Winner: " + topChoices[0][0];
-                    }
-
-                    return result;
-                });
+                const processedPolls = data.items.map(poll => this.parsePollChoices(poll));
+                if (status === 'active') {
+                    this.activePolls = processedPolls;
+                }
+                if (status === 'review') {
+                    this.pollsInReview = processedPolls;
+                }
+                if (status === 'old') {
+                    this.oldPolls = this.formatOldPolls(processedPolls);
+                }
+                pagination.page = data.page;
+                pagination.pageSize = data.page_size;
+                pagination.total = data.total;
             } catch (error) {
                 this.showNotification('There was an error fetching polls, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);
+            } finally {
+                this.pollsLoading[status] = false;
             }
+        },
+        pollTotalPages(status) {
+            const pagination = this.pollPagination[status];
+            if (!pagination) {
+                return 1;
+            }
+            const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+            return totalPages || 1;
+        },
+        changePollPage(status, page) {
+            const pagination = this.pollPagination[status];
+            if (!pagination) {
+                return;
+            }
+            if (page < 1 || page > this.pollTotalPages(status)) {
+                return;
+            }
+            pagination.page = page;
+            this.fetchPolls(status);
         },
         async createUser() {
             try {
-                const response = await fetch(`${this.API_BASE_URL}/user`, {
+                await this.apiRequest('/user', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         admin_id: this.user_details.id,
                         email: this.userDialogForm.email,
@@ -485,13 +479,8 @@ new Vue({
                     })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
-                const data = await response.json();
                 this.showSuccessNotification('User created successfully.');
-                this.showUserCreateDialog = false
+                this.showUserCreateDialog = false;
                 this.getUsers();
             } catch (error) {
                 this.showNotification('There was an error creating the user, please try again.');
@@ -499,16 +488,14 @@ new Vue({
             }
         },
         validateForm() {
-            this.errors = {}; // Clear previous errors
+            this.errors = {};
             let isValid = true;
 
-            // Validate Name
             if (!this.contactForm.name) {
                 this.errors.name = "Name is required.";
                 isValid = false;
             }
 
-            // Validate Email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!this.contactForm.email) {
                 this.errors.email = "Email is required.";
@@ -518,19 +505,16 @@ new Vue({
                 isValid = false;
             }
 
-            // Validate Subject
             if (!this.contactForm.subject) {
                 this.errors.subject = "Subject is required.";
                 isValid = false;
             }
 
-            // Validate Message
             if (!this.contactForm.message) {
                 this.errors.message = "Message is required.";
                 isValid = false;
             }
 
-            // Validate Captcha
             const correctAnswer = this.captcha.number1 + this.captcha.number2;
             if (this.captcha.answer === null || this.captcha.answer !== correctAnswer) {
                 this.errors.captcha = "Incorrect answer to the equation.";
@@ -541,50 +525,34 @@ new Vue({
         },
         async sendContactForm() {
             if (!this.validateForm()) {
-                throw new Error('Something is wrong with the form');
+                return;
             }
             try {
-                const response = await fetch(`${this.API_BASE_URL}/contactform`, {
+                await this.apiRequest('/contactform', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(this.contactForm)
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
                 this.contactForm = {
                     name: "",
                     email: "",
                     subject: "",
                     message: "",
                 };
-                this.captcha.answer = null
+                this.captcha.answer = null;
                 this.showSuccessNotification('Email sent. Thank you.');
             } catch (error) {
-                this.showNotification('There was an error creating the user, please try again.');
+                this.showNotification('There was an error sending the message, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);
             }
         },
         async deleteUser(deleteData) {
             try {
-                const response = await fetch(this.API_BASE_URL + '/user' + '?user_id=' + deleteData.id, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                await this.apiRequest(`/user?user_id=${deleteData.id}`, {
+                    method: 'DELETE'
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
-                const data = await response.json();
                 this.showSuccessNotification('User deleted successfully.');
                 this.getUsers();
-                this.showUserDeleteDialog = false
+                this.showUserDeleteDialog = false;
             } catch (error) {
                 this.showNotification('There was an error deleting the user, please try again.');
                 console.error('There has been a problem with your fetch operation:', error);
@@ -592,35 +560,25 @@ new Vue({
         },
         async deletePoll(pollId) {
             try {
-                const response = await fetch(this.API_BASE_URL + '/poll?poll_id=' + pollId + '&user_id=' + this.user_details.id, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                await this.apiRequest(`/poll?poll_id=${pollId}&user_id=${this.user_details.id}`, {
+                    method: 'DELETE'
                 });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
-                const data = await response.json();
-
-                this.getAllPolls(this.user_details.id);
                 this.showSuccessNotification('Poll deleted.');
+                await this.fetchPolls('review');
+                await this.fetchPolls('active');
+                await this.fetchPolls('old');
             } catch (error) {
-                this.showNotification('There was an error submitting the poll. Please try again.');
+                this.showNotification('There was an error deleting the poll. Please try again.');
             }
         },
         showNotification(message) {
-            this.notification.message = '';
-            this.notification.message = message;
+            this.notification.message = typeof message === 'string' ? message : (message?.message || String(message));
             this.notification.show = true;
             setTimeout(() => {
                 this.notification.show = false;
             }, 5000);
         },
         showSuccessNotification(message) {
-            this.success_notification.message = '';
             this.success_notification.message = message;
             this.success_notification.show = true;
             setTimeout(() => {
@@ -628,7 +586,7 @@ new Vue({
             }, 5000);
         },
         getVotePercentage(poll, choice) {
-            const totalVotes = poll.choices.reduce((sum, choice) => sum + choice[1], 0);
+            const totalVotes = poll.choices.reduce((sum, choiceItem) => sum + choiceItem[1], 0);
             return totalVotes ? (choice[1] / totalVotes) * 100 : 0;
         },
         async submitPoll() {
@@ -637,51 +595,43 @@ new Vue({
                 user_id: this.user_details.id,
                 title: this.newPoll.title,
                 choices: this.newPoll.choices,
+                duration: this.newPoll.duration
             };
             try {
-                const response = await fetch(this.API_BASE_URL + '/poll', {
+                await this.apiRequest('/poll', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(pollData)
                 });
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-
-                const data = await response.json();
                 this.showSuccessNotification('Poll submitted successfully.');
-                this.getAllPolls(pollData.user_id);
-                // Optionally, clear the form fields after successful submission
+                this.fetchPolls('review');
                 this.newPoll.title = '';
                 this.newPoll.choices = '';
+                this.newPoll.duration = 1;
             } catch (error) {
                 this.showNotification('There was an error submitting the poll. Please try again.');
             }
         },
         sanitizeChoices() {
-            for (let i = 0; i < this.newPoll.choices.length; i++) {
-                this.newPoll.choices[i] = this.newPoll.choices[i].replace(/,/g, ';');
+            if (!this.newPoll.choices) {
+                return;
             }
+            this.newPoll.choices = this.newPoll.choices.replace(/,/g, ';');
         },
         async startFunct() {
             const urlParams = new URLSearchParams(window.location.search);
-            userId = urlParams.get('id');
+            let userId = urlParams.get('id');
 
-            // set in localstorge otherwise checkit exists and use
             if (userId) {
                 localStorage.setItem("userId", userId);
-                this.getUser(userId);
-            }
-            else {
+                await this.getUser(userId);
+            } else {
                 userId = localStorage.getItem("userId");
                 if (userId) {
                     await this.getUser(userId);
                 }
             }
-            // remove the ID
+
             if (urlParams.has('id')) {
                 urlParams.delete('id');
                 const newUrl = window.location.pathname + '?' + urlParams.toString();
@@ -692,20 +642,17 @@ new Vue({
                 }
             }
         },
-        async fetchDocs(userId) {
+        async fetchDocs(userId, page = this.docsPagination.page) {
+            this.docsLoading = true;
             try {
-                const response = await fetch(`${this.API_BASE_URL}/api/docs?user_id=${userId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                const response = await this.apiGet('/api/docs', {
+                    user_id: userId,
+                    page,
+                    page_size: this.docsPagination.pageSize
                 });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
                 const data = await response.json();
 
-                this.docs = data.map(doc => {
+                this.docs = data.items.map(doc => {
                     const dateObj = doc.date ? new Date(doc.date) : null;
                     const year = dateObj ? dateObj.getFullYear() : 'Unknown';
                     return {
@@ -716,12 +663,22 @@ new Vue({
                     };
                 });
 
-                // sort newest first
-                this.docs.sort((a, b) => b.date - a.date);
-
+                this.docs.sort((a, b) => (b.date || 0) - (a.date || 0));
+                this.docsPagination.page = data.page;
+                this.docsPagination.pageSize = data.page_size;
+                this.docsPagination.total = data.total;
             } catch (error) {
                 console.error('Error fetching docs:', error);
+            } finally {
+                this.docsLoading = false;
             }
+        },
+        changeDocsPage(page) {
+            if (page < 1 || page > this.docsTotalPages) {
+                return;
+            }
+            this.docsPagination.page = page;
+            this.fetchDocs(this.user_details.id, page);
         },
         async handleDocClick(doc) {
             try {
@@ -754,49 +711,13 @@ new Vue({
             const response = await fetch("js/config.json");
             const config = await response.json();
             this.API_BASE_URL = config.API_BASE_URL;
-            console.log(this.API_BASE_URL);
-    
-            // Call startFunct only after API_BASE_URL is set
             await this.startFunct();
         } catch (error) {
             console.error('Error fetching config:', error);
         }
-    
-        console.log(this.user_details);
     },
     mounted() {
         this.notification.message = '';
-        var slideIndex = 1;
-        showDivs(slideIndex);
-
-        // Auto-scroll every 3 seconds
-        setInterval(function () {
-            plusDivs(1);
-        }, 3000);
-
-        function plusDivs(n) {
-            showDivs(slideIndex += n);
-        }
-
-        function currentDiv(n) {
-            showDivs(slideIndex = n);
-        }
-
-        function showDivs(n) {
-            var i;
-            var x = document.getElementsByClassName("mySlides");
-            var dots = document.getElementsByClassName("demodots");
-            if (n > x.length) { slideIndex = 1 }
-            if (n < 1) { slideIndex = x.length }
-            for (i = 0; i < x.length; i++) {
-                x[i].style.display = "none";
-            }
-            for (i = 0; i < dots.length; i++) {
-                dots[i].className = dots[i].className.replace(" w3-white", "");
-            }
-            x[slideIndex - 1].style.display = "block";
-        }
-        self = this;
         this.notification.show = false;
     }
 });

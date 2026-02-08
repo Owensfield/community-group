@@ -7,13 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/s3.css">
   <link rel="stylesheet" href="css/modern.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
   <link rel="manifest" href="/manifest.json">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <meta name="theme-color" content="#f06292">
+  <meta name="theme-color" content="#2a9d8f">
 </head>
 
 <body>
@@ -33,81 +33,44 @@
   <!-- Content -->
   <div class="w3-content" style="max-width:1100px;margin-top:80px;margin-bottom:80px">
 
-    <div class="hero-section">
-
-      <img src="./images/big-logo.png" class="hero-logo">
-      <div class="hero-text">
-        <p>
-          Tucked away in the serene woods of Caswell Valley, you’ll find charming, eco-friendly chalet huts that blend
-          seamlessly with the natural landscape. With minimal environmental impact, its residents immerse themselves
-          in nature without disturbing the delicate balance of the surrounding ecosystem.<br><br>
-          Owensfield is part of one of the few remaining traditional Welsh hutting communities, where the rich
-          heritage of simple, sustainable living is still cherished and preserved.
-        </p>
-      </div>
-    </div>
-
-    <!-- Slideshow -->
-    <div class="w3-container full-screen-section">
-      <div class="w3-display-container mySlides">
-        <img src="./images/11.png" style="width:100%">
-        <div class="w3-display-topleft w3-container w3-padding-32">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-media">
+          <img src="./images/big-logo.png" class="hero-logo" alt="Owensfield Community Group logo">
+          <div class="hero-badge">Owensfield • Caswell Valley</div>
+        </div>
+        <div class="hero-copy">
+          <h1>Owensfield Community Group</h1>
+          <p>
+            Tucked away in the serene woods of Caswell Valley, you’ll find charming, eco-friendly chalet huts that blend
+            seamlessly with the natural landscape. With minimal environmental impact, residents immerse themselves in
+            nature without disturbing the delicate balance of the surrounding ecosystem.
+          </p>
+          <p>
+            Owensfield is part of one of the few remaining traditional Welsh hutting communities, where the rich
+            heritage of simple, sustainable living is still cherished and preserved.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#polls">View Polls</a>
+            <a class="btn ghost" href="#docs">Read Docs</a>
+          </div>
         </div>
       </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/4.jpg" style="width:100%">
-        <div class="w3-display-topright w3-container w3-padding-32">
+      <div class="hero-strip">
+        <div>
+          <span class="hero-strip-title">Community-first decisions</span>
+          <span class="hero-strip-text">Transparent votes, clear outcomes.</span>
+        </div>
+        <div>
+          <span class="hero-strip-title">Member access</span>
+          <span class="hero-strip-text">Docs and polls in one place.</span>
+        </div>
+        <div>
+          <span class="hero-strip-title">Stewardship</span>
+          <span class="hero-strip-text">Sustainable living, preserved tradition.</span>
         </div>
       </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/2.jpg" style="width:100%">
-        <div class="w3-display-middle w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/3.png" style="width:100%">
-        <div class="w3-display-topright w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/5.png" style="width:100%">
-        <div class="w3-display-topleft w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/7.png" style="width:100%">
-        <div class="w3-display-middle w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/8.png" style="width:100%">
-        <div class="w3-display-topright w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/9.png" style="width:100%">
-        <div class="w3-display-topleft w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/10.png" style="width:100%">
-        <div class="w3-display-topright w3-container w3-padding-32">
-        </div>
-      </div>
-      <div class="w3-display-container mySlides">
-        <img src="./images/1.png" style="width:100%">
-        <div class="w3-display-middle w3-container w3-padding-32">
-        </div>
-      </div>
-
-      <!-- Slideshow next/previous buttons -->
-      <div class="w3-container w3-dark-grey w3-medium">
-        <div class="w3-left" onclick="plusDivs(-1)"><i class="fa fa-arrow-circle-left w3-hover-text-teal"></i></div>
-        <div class="w3-right" onclick="plusDivs(1)"><i class="fa fa-arrow-circle-right w3-hover-text-teal"></i></div>
-
-      </div>
-
-    </div>
+    </section>
 
     <div id="app">
             <!-- Dialog for displaying renew content -->
@@ -127,27 +90,39 @@
                 </div>
               </div>
             </div>
-      <div class="w3-container full-screen-section">
-        <div class="w3-center w3-padding-64" id="docs">
-          <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Docs</span>
+      <section class="section-card" id="docs">
+        <div class="section-header">
+          <span class="section-eyebrow">Docs</span>
+          <h2>Community Documents</h2>
+          <p class="section-subtitle">Meeting notes, updates, and policies for members.</p>
         </div>
 
         <div id="docs-app">
-          <div v-if="docs.length > 0" class="w3-card-4">
+          <div v-if="docsLoading" class="loading-state">Loading documents…</div>
+          <div v-else-if="docs.length === 0" class="empty-state">No documents available yet.</div>
+          <div v-else class="w3-card-4 docs-card">
             <ul class="w3-ul">
-              <div v-for="year in Object.keys(docsGroupedByYear).sort((a, b) => b - a)" :key="year"
-                class="w3-margin-top">
-                <h4 style="padding-left: 8px">{{ year }}</h4>
+              <div v-for="year in docsYears" :key="year"
+                class="docs-year">
+                <h4>{{ year }}</h4>
                 <ul class="w3-ul">
-                  <li v-for="doc in docsGroupedByYear[year]" :key="doc.name" class="w3-hover-light-grey"
-                    style="cursor: pointer;" @click="handleDocClick(doc)">
-                    {{ doc.name }}
-                    <span v-if="doc.type === 'pdf'" class="text-sm text-gray-500">(PDF)</span>
-                    <span v-if="doc.type === 'markdown'" class="text-sm text-gray-500">(Markdown)</span>
+                  <li v-for="doc in docsGroupedByYear[year]" :key="doc.name" class="doc-row"
+                    @click="handleDocClick(doc)">
+                    <span class="doc-name">{{ doc.name }}</span>
+                    <span class="doc-type" v-if="doc.type === 'pdf'">PDF</span>
+                    <span class="doc-type" v-if="doc.type === 'markdown'">Markdown</span>
                   </li>
                 </ul>
               </div>
             </ul>
+          </div>
+
+          <div class="pagination" v-if="docsTotalPages > 1">
+            <button class="btn ghost" @click="changeDocsPage(docsPagination.page - 1)"
+              :disabled="docsPagination.page <= 1">Prev</button>
+            <span>Page {{ docsPagination.page }} of {{ docsTotalPages }}</span>
+            <button class="btn ghost" @click="changeDocsPage(docsPagination.page + 1)"
+              :disabled="docsPagination.page >= docsTotalPages">Next</button>
           </div>
 
           <!-- Dialog for displaying document content -->
@@ -173,15 +148,15 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Grid -->
-      <div class="w3-container full-screen-section">
-        <div class="w3-row-padding " id="polls">
-          <div class="w3-center w3-padding-64">
-            <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Polls</span>
-
-          </div>
+      <!-- Polls -->
+      <section class="section-card" id="polls">
+        <div class="section-header">
+          <span class="section-eyebrow">Polls</span>
+          <h2>Community Polls</h2>
+          <p class="section-subtitle">Help guide decisions by voting on active polls.</p>
+        </div>
           <div v-if="!showTabs">
             <p class="w3-center">Community polls for guiding decisions making.</p>
             <p class="w3-center">Use your unique link/QRCode to login.</p>
@@ -196,12 +171,11 @@
             </center>
           </div>
 
-          <div v-if="notification.show" id="notification" class="notification" v-if="notification.message">
+          <div v-if="notification.show" id="notification" class="notification">
             {{ notification.message }}
           </div>
 
-          <div v-if="success_notification.show" id="success_notification" class="success_notification"
-            v-if="success_notification.message">
+          <div v-if="success_notification.show" id="success_notification" class="success_notification">
             {{ success_notification.message }}
           </div>
 
@@ -219,7 +193,9 @@
 
             <div id="Active" class="tabcontent">
               <h3>Active Polls</h3>
-              <div class="polls-container">
+              <div v-if="pollsLoading.active" class="loading-state">Loading polls…</div>
+              <div v-else-if="activePolls.length === 0" class="empty-state">No active polls right now.</div>
+              <div v-else class="polls-container">
                 <div v-for="(poll, pollIndex) in activePolls" :key="pollIndex" class="poll">
                   <p v-html="convertLinks(poll.title)"></p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
@@ -234,11 +210,20 @@
                     Update run time</button>
                 </div>
               </div>
+              <div class="pagination" v-if="pollTotalPages('active') > 1">
+                <button class="btn ghost" @click="changePollPage('active', pollPagination.active.page - 1)"
+                  :disabled="pollPagination.active.page <= 1">Prev</button>
+                <span>Page {{ pollPagination.active.page }} of {{ pollTotalPages('active') }}</span>
+                <button class="btn ghost" @click="changePollPage('active', pollPagination.active.page + 1)"
+                  :disabled="pollPagination.active.page >= pollTotalPages('active')">Next</button>
+              </div>
             </div>
 
             <div id="Old" class="tabcontent">
               <h3>Old Polls</h3>
-              <div class="polls-container">
+              <div v-if="pollsLoading.old" class="loading-state">Loading polls…</div>
+              <div v-else-if="oldPolls.length === 0" class="empty-state">No completed polls yet.</div>
+              <div v-else class="polls-container">
                 <div v-for="(poll, pollIndex) in oldPolls" :key="pollIndex" class="poll">
                   <p v-html="convertLinks(poll.title)"></p>
                   <ul class="no-bullets">
@@ -250,6 +235,13 @@
                   <button v-if="user_details.roll == 2" @click="showPollUpdateRunDialog(poll)">
                     Update run time</button>
                 </div>
+              </div>
+              <div class="pagination" v-if="pollTotalPages('old') > 1">
+                <button class="btn ghost" @click="changePollPage('old', pollPagination.old.page - 1)"
+                  :disabled="pollPagination.old.page <= 1">Prev</button>
+                <span>Page {{ pollPagination.old.page }} of {{ pollTotalPages('old') }}</span>
+                <button class="btn ghost" @click="changePollPage('old', pollPagination.old.page + 1)"
+                  :disabled="pollPagination.old.page >= pollTotalPages('old')">Next</button>
               </div>
             </div>
 
@@ -277,7 +269,9 @@
 
             <div v-if="user_details.roll > 0" id="Review" class="tabcontent">
               <h3>Polls in review</h3>
-              <div class="polls-container">
+              <div v-if="pollsLoading.review" class="loading-state">Loading polls…</div>
+              <div v-else-if="pollsInReview.length === 0" class="empty-state">No polls waiting for review.</div>
+              <div v-else class="polls-container">
                 <div v-for="(poll, pollIndex) in pollsInReview" :key="pollIndex" class="poll">
                   <p v-html="convertLinks(poll.title)"></p>
                   <div v-for="(choice, index) in poll.choices" :key="index">
@@ -288,6 +282,13 @@
                   </button>
                   <button @click="deletePoll(poll.id)">Delete</button>
                 </div>
+              </div>
+              <div class="pagination" v-if="pollTotalPages('review') > 1">
+                <button class="btn ghost" @click="changePollPage('review', pollPagination.review.page - 1)"
+                  :disabled="pollPagination.review.page <= 1">Prev</button>
+                <span>Page {{ pollPagination.review.page }} of {{ pollTotalPages('review') }}</span>
+                <button class="btn ghost" @click="changePollPage('review', pollPagination.review.page + 1)"
+                  :disabled="pollPagination.review.page >= pollTotalPages('review')">Next</button>
               </div>
             </div>
 
@@ -505,29 +506,25 @@
 
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Grid -->
-      <div class="w3-container full-screen-section">
-        <div class="w3-row-padding" id="payments">
-          <div class="w3-center w3-padding-64">
-            <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Payments</span>
-
-          </div>
-          <p class="w3-center">Donate to Owensfield, or for members to pay their membership.</p>
-          <center>
-            <button class="btnstyle"
-              onClick="window.open('https://pay.collctiv.com/ocg-2024-membership-fee-24808', '_blank')">Pay or
-              donate</button>
-          </center>
-
+      <section class="section-card" id="payments">
+        <div class="section-header">
+          <span class="section-eyebrow">Payments</span>
+          <h2>Support Owensfield</h2>
+          <p class="section-subtitle">Donate or pay your membership fee securely.</p>
         </div>
-      </div>
+        <div class="centered-actions">
+          <button class="btn primary"
+            onClick="window.open('https://pay.collctiv.com/ocg-2024-membership-fee-24808', '_blank')">Pay or donate</button>
+        </div>
+      </section>
 
-      <!-- Contact -->
-      <div class="w3-container">
-        <div class="w3-center w3-padding-64" id="contact">
-          <span class="w3-xlarge w3-bottombar w3-border-dark-grey w3-padding-16">Contact the steering group</span>
+      <section class="section-card" id="contact">
+        <div class="section-header">
+          <span class="section-eyebrow">Contact</span>
+          <h2>Contact the Steering Group</h2>
+          <p class="section-subtitle">Questions, ideas, or updates? Send a message.</p>
         </div>
 
         <form @submit.prevent="sendContactForm" class="w3-container">
@@ -576,9 +573,7 @@
           <!-- Submit Button -->
           <button type="submit" class="w3-button w3-block w3-black">Send</button>
         </form>
-        <div class="w3-container">
-        </div>
-      </div>
+      </section>
     </div>
   </div>
   <!-- Footer -->
@@ -591,7 +586,7 @@
       <i class="fa fa-snapchat w3-hover-opacity"></i>
       <i class="fa fa-pinterest-p w3-hover-opacity"></i> -->
       <i class="w3-hover-opacity" onClick="window.open('https://nostr.com/@owensfield', '_blank')"><img
-          src="./images/nostr.png"></i>
+          src="./images/nostr.png" alt="Nostr logo"></i>
       <!--       <i class="fa fa-linkedin w3-hover-opacity"></i> -->
     </div>
   </footer>

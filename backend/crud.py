@@ -132,6 +132,7 @@ async def get_poll(poll_id: str)-> PollData:
 
 async def get_polls() -> List[PollData]:
     rows = await db.fetchall("SELECT * FROM Polls")
+    updated = False
     for row in rows:
         if not row['complete'] and row['startdate']:
             startdate = datetime.strptime(row['startdate'], '%Y-%m-%d %H:%M:%S')
@@ -143,6 +144,9 @@ async def get_polls() -> List[PollData]:
                 # Duration has elapsed
                 await db.execute("UPDATE Polls SET complete = ? WHERE id = ?", 
                      (True, row['id']))
+                updated = True
+    if updated:
+        rows = await db.fetchall("SELECT * FROM Polls")
     return [PollData(**row) for row in rows]
 
 async def delete_poll(poll_id: str) -> None:

@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 import io
 from fastapi.responses import PlainTextResponse, StreamingResponse
 import httpx
 import base64
-from time import time
 from helpers import (
     send_email,
     resend_link_email,
@@ -17,10 +16,9 @@ from helpers import (
     SUPER_USER_EMAIL,
     CONTACT_FORM_EMAIL
 )
+import asyncio
 from typing import List
-from pydantic import BaseModel
 from http import HTTPStatus
-from fastapi import FastAPI, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from migrations import migrate
 from typing import Optional
@@ -47,12 +45,16 @@ from models import (
     UserData,
     UpdateUserData,
     CreatePollData,
+    PollData,
     CreateVote,
     UpdateConditions,
     EmailRequest,
     UpdatePollRun,
     ContactForm,
-    EmailAllRequest
+    EmailAllRequest,
+    DocFile,
+    PaginatedDocs,
+    PaginatedPolls
 )
 
 ovs = FastAPI()
@@ -282,15 +284,45 @@ async def ovs_api_update_poll(data: UpdatePollRun):
     
     return await update_poll_run_time(data.id, data.duration, data.complete)
 
-@ovs.get("/polls")
-async def ovs_api_get_polls(user_id: str):
+def filter_polls_by_status(polls: List[PollData], status: Optional[str]) -> List[PollData]:
+    if status:
+        status = status.lower()
+    if not status or status == "all":
+        return polls
+    if status == "active":
+        return [poll for poll in polls if poll.confirms >= 4 and not poll.complete]
+    if status == "review":
+        return [poll for poll in polls if poll.confirms < 4 and not poll.complete]
+    if status == "old":
+        return [poll for poll in polls if poll.complete]
+    return polls
+
+@ovs.get("/polls", response_model=PaginatedPolls)
+async def ovs_api_get_polls(user_id: str, status: Optional[str] = "all", page: int = 1, page_size: int = 10):
     user = await get_user(user_id)
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="No user found",
         )
-    return await get_polls()
+    if status and status.lower() == "review" and user.roll < 1:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Not an admin",
+        )
+    page, page_size = clamp_pagination(page, page_size)
+    polls = await get_polls()
+    filtered = filter_polls_by_status(polls, status)
+    total = len(filtered)
+    start = (page - 1) * page_size
+    end = start + page_size
+    paged_polls = filtered[start:end]
+    return PaginatedPolls(
+        items=paged_polls,
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 @ovs.delete("/poll")
@@ -306,14 +338,13 @@ async def ovs_api_delete_poll(poll_id: str, user_id: str):
 
 ### DOCS
 
+def clamp_pagination(page: int, page_size: int, max_page_size: int = 50):
+    safe_page = max(page, 1)
+    safe_page_size = max(1, min(page_size, max_page_size))
+    return safe_page, safe_page_size
 
-class DocFile(BaseModel):
-    name: str
-    path: str
-    date: Optional[str]
-
-@ovs.get("/api/docs", response_model=List[DocFile])
-async def get_docs(user_id: str):
+@ovs.get("/api/docs", response_model=PaginatedDocs)
+async def get_docs(user_id: str, page: int = 1, page_size: int = 12):
     user = await get_user(user_id)
     if not user:
         raise HTTPException(
@@ -321,6 +352,7 @@ async def get_docs(user_id: str):
             detail="No user found",
         )
 
+    page, page_size = clamp_pagination(page, page_size)
     url = f"{GITHUB_API_BASE}/repos/{REPO_NAME}/contents/{DOCS_PATH}"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
@@ -338,27 +370,43 @@ async def get_docs(user_id: str):
         if file["name"].endswith((".md", ".pdf"))
     ]
 
+    sem = asyncio.Semaphore(5)
+
+    async def fetch_commit_date(client: httpx.AsyncClient, file_name: str) -> Optional[str]:
+        commits_url = (
+            f"{GITHUB_API_BASE}/repos/{REPO_NAME}/commits"
+            f"?path={DOCS_PATH}/{file_name}&per_page=1"
+        )
+        async with sem:
+            commit_resp = await client.get(commits_url, headers=headers)
+        if commit_resp.status_code == 200 and len(commit_resp.json()) > 0:
+            commit_data = commit_resp.json()
+            return commit_data[0]["commit"]["committer"]["date"]
+        return None
+
     docs = []
     async with httpx.AsyncClient() as client:
-        for file in files:
-            commits_url = (
-                f"{GITHUB_API_BASE}/repos/{REPO_NAME}/commits"
-                f"?path={DOCS_PATH}/{file['name']}&per_page=1"
-            )
-            commit_resp = await client.get(commits_url, headers=headers)
-            if commit_resp.status_code == 200 and len(commit_resp.json()) > 0:
-                commit_data = commit_resp.json()
-                commit_date = commit_data[0]["commit"]["committer"]["date"]
-            else:
-                commit_date = None
-
+        tasks = [fetch_commit_date(client, file["name"]) for file in files]
+        commit_dates = await asyncio.gather(*tasks)
+        for file, commit_date in zip(files, commit_dates):
             docs.append(DocFile(
                 name=file["name"],
                 path=file["download_url"] if "download_url" in file else file["path"],
                 date=commit_date,
             ))
 
-    return docs
+    docs.sort(key=lambda doc: doc.date or "", reverse=True)
+    total = len(docs)
+    start = (page - 1) * page_size
+    end = start + page_size
+    paged_docs = docs[start:end]
+
+    return PaginatedDocs(
+        items=paged_docs,
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 @ovs.get("/api/docs/{filename}", response_class=StreamingResponse)

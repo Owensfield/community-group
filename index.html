@@ -17,6 +17,7 @@
 </head>
 
 <body>
+  <div id="app">
 
   <!-- Links (sit on top) -->
   <div class="w3-top">
@@ -25,6 +26,7 @@
       <a href="#polls">Polls</a>
       <a href="#docs">Docs</a>
       <a href="#payments">Pay</a>
+      <a v-if="user_details.roll > 0" href="#admin">Admin</a>
       <a href="#contact">Contact</a>
     </div>
   </div>
@@ -72,7 +74,7 @@
       </div>
     </section>
 
-    <div id="app">
+    
             <!-- Dialog for displaying renew content -->
             <div v-if="showUserRenewDialog" class="w3-modal" style="display: block;">
               <div class="w3-modal-content w3-card-4">
@@ -186,9 +188,7 @@
               <button class="tablinks" @click="openTab($event, 'Suggest')">Suggest a poll</button>
               <button v-if="user_details.roll > 0" class="tablinks" @click="openTab($event, 'Review')">Polls in
                 review*</button>
-              <button v-if="user_details.roll > 0" class="tablinks" @click="openTab($event, 'allUsers')">Users*</button>
-              <button v-if="user_details.roll == 2" class="tablinks"
-                @click="openTab($event, 'conditions')">Conditions*</button>
+              
             </div>
 
             <div id="Active" class="tabcontent">
@@ -289,48 +289,6 @@
                 <span>Page {{ pollPagination.review.page }} of {{ pollTotalPages('review') }}</span>
                 <button class="btn ghost" @click="changePollPage('review', pollPagination.review.page + 1)"
                   :disabled="pollPagination.review.page >= pollTotalPages('review')">Next</button>
-              </div>
-            </div>
-
-            <div v-if="user_details.roll > 0" id="allUsers" class="tabcontent">
-              <h3 style="display: flex; align-items: center;">
-                Users
-                <button @click="showUserIds = !showUserIds" style="
-                  background: none;
-                  border: none;
-                  padding: 0;
-                  margin-left: 8px;
-                  font-size: 1.5rem;
-                  cursor: pointer;
-                ">
-                  <span v-if="showUserIds">👁️</span>
-                  <span v-else>🙈</span>
-                </button>
-              </h3>
-
-              <button @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create a user</button>
-              <button @click="showEmailAllDialog = true" v-if="user_details.roll > 0">Email all users</button>
-
-              <div class="user-cards">
-                <div v-for="user in users" :key="user.id" class="user-card">
-                  <p>
-                    <strong>ID:</strong>
-                    <input :type="showUserIds ? 'text' : 'password'" :value="user.id" readonly
-                      style="width: 100%; border: none; background: transparent; font-family: monospace;" />
-                  </p>
-                  <p><strong>EMAIL:</strong> {{ user.email }}</p>
-                  <p><strong>ROLL:</strong> {{ user.roll }}</p>
-                  <p><strong>RENEW:</strong> {{ user.renew }}</p>
-                  <p><strong>ACTIVE:</strong> {{ user.active }}</p>
-
-                  <div class="user-buttons">
-                    <button @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">Edit</button>
-                    <button @click="resendLink(user.email)">Resend link to email</button>
-                    <button v-if="user_details.roll == 2"
-                      @click="openDeleteUserDialog({id:user.id,email:user.email})">Delete</button>
-                    <button @click="showQrCode(user.id)">QR Code</button>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -487,24 +445,75 @@
               </div>
             </div>
 
-            <div v-if="user_details.roll == 2" id="conditions" class="tabcontent">
-              <h3>Conditions</h3>
-              <form @submit.prevent="conditionsUpdate">
-                <label for="conditionsQuorum">Quorum:</label>
-                <br></br>
-                <input class="responsive-input" style="min-width: 400px;" type="text" id="conditionsQuorum"
-                  v-model="conditionsData.quorum" name="user_id">
-                <br></br>
-                <label for="conditionsThreshold">Threshold:</label>
-                <br></br>
-                <input class="responsive-input" style="min-width: 400px;" type="text" id="conditionsThreshold"
-                  v-model="conditionsData.threshold" name="user_id">
-                <br></br>
-                <button type="submit">Submit</button>
-              </form>
-            </div>
-
           </div>
+        </div>
+      </section>
+
+      <section class="section-card" id="admin" v-if="user_details.roll > 0">
+        <div class="section-header">
+          <span class="section-eyebrow">Admin</span>
+          <h2>Member Management</h2>
+          <p class="section-subtitle">Manage members, resend login links, and keep accounts up to date.</p>
+        </div>
+
+        <div class="admin-toolbar">
+          <div class="admin-actions">
+            <button class="btn primary" @click="showUserCreateDialog = true" v-if="user_details.roll == 2">Create user</button>
+            <button class="btn ghost" @click="showEmailAllDialog = true">Email all users</button>
+          </div>
+          <div class="admin-tools">
+            <input class="admin-search" type="text" placeholder="Search by email or ID" v-model="userSearch">
+            <button class="btn ghost" @click="showUserIds = !showUserIds">
+              <span v-if="showUserIds">Hide IDs</span>
+              <span v-else>Show IDs</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="users.length === 0" class="empty-state">No users found.</div>
+        <div v-else class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Member ID</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Renew</th>
+                <th>Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in filteredUsers" :key="user.id">
+                <td>
+                  <input :type="showUserIds ? 'text' : 'password'" :value="user.id" readonly class="admin-id" />
+                </td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.roll }}</td>
+                <td>{{ user.renew }}</td>
+                <td>{{ user.active }}</td>
+                <td class="table-actions">
+                  <button class="btn ghost" @click="openUpdateUserDialog({id:user.id,email:user.email,roll:user.roll})">Edit</button>
+                  <button class="btn ghost" @click="resendLink(user.email)">Resend link</button>
+                  <button class="btn ghost" @click="showQrCode(user.id)">QR Code</button>
+                  <button class="btn danger" v-if="user_details.roll == 2" @click="openDeleteUserDialog({id:user.id,email:user.email})">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="admin-conditions" v-if="user_details.roll == 2">
+          <h3>Polling Conditions</h3>
+          <form @submit.prevent="conditionsUpdate">
+            <label for="conditionsQuorum">Quorum:</label>
+            <input class="responsive-input" style="min-width: 200px;" type="text" id="conditionsQuorum"
+              v-model="conditionsData.quorum" name="user_id">
+            <label for="conditionsThreshold">Threshold:</label>
+            <input class="responsive-input" style="min-width: 200px;" type="text" id="conditionsThreshold"
+              v-model="conditionsData.threshold" name="user_id">
+            <button type="submit" class="btn primary">Save conditions</button>
+          </form>
         </div>
       </section>
 
@@ -603,6 +612,7 @@
         });
     }
   </script>
+  </div>
 </body>
 
 </html>

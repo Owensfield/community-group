@@ -71,6 +71,7 @@ new Vue({
             subject: '',
             message: ''
         },
+        userSearch: '',
         pollsLoading: {
             active: false,
             review: false,
@@ -102,6 +103,17 @@ new Vue({
                 if (a === 'Unknown') return 1;
                 if (b === 'Unknown') return -1;
                 return b - a;
+            });
+        },
+        filteredUsers() {
+            const search = this.userSearch.trim().toLowerCase();
+            if (!search) {
+                return this.users;
+            }
+            return this.users.filter(user => {
+                const email = (user.email || '').toLowerCase();
+                const id = (user.id || '').toLowerCase();
+                return email.includes(search) || id.includes(search);
             });
         },
         docsTotalPages() {
